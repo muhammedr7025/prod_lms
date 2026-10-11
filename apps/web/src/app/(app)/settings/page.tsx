@@ -1,5 +1,13 @@
-import { ScreenPlaceholder } from '@/components/screen-placeholder';
+import { institutionSettingsContract } from '@exatech/contracts';
+import { SettingsScreen } from '@/features/settings';
+import { Prefetch, q } from '@/lib/prefetch';
+
+export const metadata = { title: 'Settings' };
 
 export default function Page() {
-  return <ScreenPlaceholder screen="settings" />;
+  return (
+    <Prefetch queries={[q(institutionSettingsContract.get, {})]}>
+      <SettingsScreen />
+    </Prefetch>
+  );
 }

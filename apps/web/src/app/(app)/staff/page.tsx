@@ -1,5 +1,13 @@
-import { ScreenPlaceholder } from '@/components/screen-placeholder';
+import { institutionStaffContract } from '@exatech/contracts';
+import { StaffScreen } from '@/features/staff';
+import { Prefetch, q } from '@/lib/prefetch';
+
+export const metadata = { title: 'Staff & teachers' };
 
 export default function Page() {
-  return <ScreenPlaceholder screen="staff" />;
+  return (
+    <Prefetch queries={[q(institutionStaffContract.list, {})]}>
+      <StaffScreen />
+    </Prefetch>
+  );
 }

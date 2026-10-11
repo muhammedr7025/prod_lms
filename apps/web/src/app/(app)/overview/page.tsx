@@ -1,5 +1,13 @@
-import { ScreenPlaceholder } from '@/components/screen-placeholder';
+import { approvalsContract, institutionContract } from '@exatech/contracts';
+import { OverviewScreen } from '@/features/institution';
+import { Prefetch, q } from '@/lib/prefetch';
+
+export const metadata = { title: 'Overview' };
 
 export default function Page() {
-  return <ScreenPlaceholder screen="dashboard" />;
+  return (
+    <Prefetch queries={[q(institutionContract.overview, {}), q(approvalsContract.list, { query: { status: 'pending', level: 'super_admin' } })]}>
+      <OverviewScreen />
+    </Prefetch>
+  );
 }
