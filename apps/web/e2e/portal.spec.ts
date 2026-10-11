@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import zlib from 'node:zlib';
 import type { APIRequestContext, Page } from '@playwright/test';
-import { expect, loginAs, PERSONAS, test, type Persona } from './fixtures';
+import { expect, loginAs, PERSONAS, reseed, test, type Persona } from './fixtures';
 
 /**
  * Student & Parent portals (phone, 390×844). Mutates data (payments,
@@ -17,10 +17,6 @@ function sql(query: string): string {
   return execFileSync('psql', [DB, '-qtAX', '-v', 'ON_ERROR_STOP=1', '-c', query], { encoding: 'utf8' }).trim().split('\n')[0]!.trim();
 }
 
-function reseed() {
-  execFileSync('pnpm', ['--filter', '@exatech/db', 'seed'], { cwd: ROOT, stdio: 'pipe', env: process.env });
-  execFileSync('pnpm', ['--filter', '@exatech/api', 'seed:files'], { cwd: ROOT, stdio: 'pipe', env: process.env });
-}
 
 /** Text drawn with simple fonts: inflate the PDF's streams and decode Tj strings. */
 function pdfText(buf: Buffer): string {
@@ -426,7 +422,7 @@ test.describe('parent portal (Suresh · Anjali + Rohan)', () => {
     await loginAs(page, 'parent');
     await page.goto('/parent/alerts');
     await expect(page.getByText('Both children')).toBeVisible();
-    const absence = page.getByTestId('alert-card').filter({ hasText: 'Rohan absent today' });
+    const absence = page.getByTestId('alert-card').filter({ hasText: /Rohan absent/ });
     await expect(absence).toContainText('Absence');
     await expect(absence.locator('.border-ink')).toHaveCount(1);
     const fee = page.getByTestId('alert-card').filter({ hasText: 'Fee overdue · Rohan' });

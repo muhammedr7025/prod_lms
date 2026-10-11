@@ -35,7 +35,6 @@ export function Dialog({ open, onOpenChange, kicker, title, description, width =
             className,
           )}
           style={{ width: `min(${width}px, 94vw)` }}
-          aria-describedby={description ? undefined : undefined}
         >
           <Corners />
           {kicker != null && <Kicker>{kicker}</Kicker>}

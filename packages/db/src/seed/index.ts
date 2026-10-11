@@ -6,6 +6,8 @@ import {
   computeClearance,
   financialYear,
   formatNumber,
+  formatWeekdayDate,
+  daysBetween,
   istDateTime,
   leadScore,
   monthStart,
@@ -1259,6 +1261,15 @@ export async function seed(url = process.env.DATABASE_URL, anchorArg?: string) {
     /* ── notifications ── */
     const anjali = students.find((x) => x.name === 'Anjali Menon')!;
     const rohan = students.find((x) => x.name === 'Rohan Menon')!;
+    // Rohan's most recent real absence (matches his attendance history and the timetable).
+    const rohanAbsenceNotif = () => {
+      const fsbPast = sessionsByBatch[batchByCode['FS-B']!.id]!.filter((x) => x.date < anchor);
+      const statuses = statusesByEnrollment[rohan.enrollmentId] ?? [];
+      const idx = statuses.lastIndexOf('A');
+      const date = idx >= 0 ? fsbPast[idx]?.date : undefined;
+      if (!date) return [];
+      return [notif(sureshUserId, 'attendance', `Rohan absent · ${formatWeekdayDate(date)}`, 'FS-B · Full Stack · marked absent · same-day WhatsApp alert sent', daysBetween(date, anchor) * 1440 - 600, '/parent/attendance')];
+    };
     const notif = (user: string, category: string, title: string, body: string, minsAgo: number, link: string | null = null) => ({
       userId: user,
       category: category as never,
@@ -1279,7 +1290,7 @@ export async function seed(url = process.env.DATABASE_URL, anchorArg?: string) {
       notif(anjali.userId, 'fee_due', 'Instalment 2 · ₹15,000 due', 'Fee-gated notes unlock as soon as the payment clears', 600, '/student/fees'),
       notif(anjali.userId, 'marks', 'Marks published · Module 1', 'Foundations · view your score', 1500, '/student/marks'),
       notif(sureshUserId, 'fee_due', 'Fee overdue · Rohan', '₹15,000 overdue for FS-B · pay online', 1440, '/parent/fees'),
-      notif(sureshUserId, 'attendance', 'Rohan absent today', 'FS-B · Full Stack · marked absent', 300, '/parent/attendance'),
+      ...rohanAbsenceNotif(),
       notif(sureshUserId, 'marks', 'Marks published · Anjali', 'Module 1 · Foundations', 1500, '/parent/marks'),
       notif(userIds.meera!, 'lead', 'New lead assigned', 'Referral · Digital Marketing · first response timer started', 15, '/sales/pipeline'),
     ]);

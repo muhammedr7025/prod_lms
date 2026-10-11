@@ -15,7 +15,7 @@
     "lint": "turbo run lint",
     "db:generate": "pnpm --filter @exatech/db generate",
     "db:migrate": "pnpm --filter @exatech/db migrate",
-    "db:seed": "pnpm --filter @exatech/db seed",
+    "db:seed": "pnpm --filter @exatech/db seed && pnpm --filter @exatech/api seed:files",
     "db:reset": "pnpm --filter @exatech/db reset",
     "setup:local": "node scripts/setup-local.mjs",
     "e2e": "pnpm --filter @exatech/web e2e"

@@ -103,10 +103,12 @@ export interface SegProps<T extends string> {
   className?: string;
   full?: boolean;
   size?: 'md' | 'lg';
+  /** Let long labels wrap onto two lines (narrow phone layouts). */
+  wrap?: boolean;
   'aria-label'?: string;
 }
 
-export function Seg<T extends string>({ value, onChange, options, className, full, size = 'md', ...rest }: SegProps<T>) {
+export function Seg<T extends string>({ value, onChange, options, className, full, size = 'md', wrap, ...rest }: SegProps<T>) {
   return (
     <div role="radiogroup" aria-label={rest['aria-label']} className={cn('inline-flex border border-divider overflow-hidden', full && 'flex w-full', className)}>
       {options.map((o, i) => {
@@ -120,7 +122,9 @@ export function Seg<T extends string>({ value, onChange, options, className, ful
             disabled={o.disabled}
             onClick={() => onChange(o.value)}
             className={cn(
-              'inline-flex items-center justify-center gap-1.5 whitespace-nowrap px-3 text-[13px] cursor-pointer transition-colors focus-visible:outline-2 focus-visible:outline-accent focus-visible:-outline-offset-2 disabled:opacity-45',
+              'inline-flex items-center justify-center gap-1.5 px-3 text-[13px] cursor-pointer',
+              wrap ? 'whitespace-normal text-center leading-tight py-1.5' : 'whitespace-nowrap',
+              ' transition-colors focus-visible:outline-2 focus-visible:outline-accent focus-visible:-outline-offset-2 disabled:opacity-45',
               size === 'lg' ? 'min-h-10' : 'py-[7px]',
               i > 0 && 'border-l border-divider',
               full && 'flex-1',
