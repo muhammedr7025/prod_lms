@@ -165,6 +165,21 @@ test.describe('institution · super admin', () => {
     expect(sql(`select r.capacity from room r join branch b on b.id = r.branch_id where b.code = 'CLT' and r.name = 'E2E Studio ${STAMP}'`)).toBe('18');
   });
 
+  test('add branch: the API’s field messages show inline and nothing is created', async ({ page }) => {
+    const before = sql(`select count(*) from branch`);
+    await loginAs(page, 'superadmin');
+    await page.goto('/branches');
+    await page.getByRole('button', { name: 'Add branch' }).click();
+    const dlg = page.getByRole('dialog', { name: 'Add branch' });
+    await dlg.getByLabel('Code').fill('TST');
+    await dlg.getByLabel('Monthly collection target ₹').fill('500000');
+    await dlg.getByRole('button', { name: 'Add branch' }).click();
+    await expect(dlg.getByText('Enter the branch name')).toBeVisible();
+    await expect(dlg.getByText('Enter the address')).toBeVisible();
+    await expect(dlg.getByText('Enter the city')).toBeVisible();
+    expect(sql(`select count(*) from branch`)).toBe(before);
+  });
+
   test('invite a teacher → email in Mailpit → they sign in and land on /teacher', async ({ page, browser }) => {
     await loginAs(page, 'superadmin');
     await page.goto('/staff?invite=1');

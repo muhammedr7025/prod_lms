@@ -1,5 +1,5 @@
 import { academicsTimetableContract } from '@exatech/contracts';
-import { TimetableScreen } from '@/features/timetable';
+import { TimetableScreen } from '@/features/timetable/components/timetable-screen';
 import { Prefetch, q } from '@/lib/prefetch';
 
 export const metadata = { title: 'Timetable' };

@@ -1,5 +1,5 @@
 import { teachingMarksContract } from '@exatech/contracts';
-import { MarksScreen } from '@/features/teacher';
+import { MarksScreen } from '@/features/teacher/components/marks-screen';
 import { Prefetch, q } from '@/lib/prefetch';
 
 export const metadata = { title: 'Marks entry' };

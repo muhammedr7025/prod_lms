@@ -1,10 +1,10 @@
 'use client';
 
-import { BRAND_MIN_CONTRAST, BRAND_PRESETS, contrastOnWhite, institutionSettingsContract, zSettings, type SettingsInput, type SettingsView } from '@exatech/contracts';
+import { BRAND_MIN_CONTRAST, BRAND_PRESETS, contrastOnWhite, institutionSettingsContract, type SettingsInput, type SettingsView } from '@exatech/contracts';
 import { formatNumber, validatePattern } from '@exatech/domain';
 import { Button, Card, CardBody, CardMeta, CardTitle, Checkbox, EmptyState, Field, Grid, Input, Issue, Page, PageHeader, Radio, Skeleton, Tag, cn } from '@exatech/ui';
 import { useEffect, useMemo, useState } from 'react';
-import { apiErrors, zodErrors, type FieldErrors } from '@/features/institution';
+import { apiErrors, type FieldErrors } from '@/features/institution/components/parts';
 import { useApi, useApiMutation } from '@/lib/hooks';
 
 type Draft = Omit<SettingsInput, 'clearancePolicy'> & { policyKind: 'current_instalment' | 'fully_paid' | 'percentage'; policyPct: string };
@@ -75,11 +75,8 @@ export function SettingsScreen() {
   const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setDraft((d) => (d ? { ...d, [k]: v } : d));
   const setSec = <K extends keyof Draft['security']>(k: K, v: Draft['security'][K]) => setDraft((d) => (d ? { ...d, security: { ...d.security, [k]: v } } : d));
   const submit = () => {
-    const input = toInput(draft);
-    const r = zSettings.safeParse(input);
-    if (!r.success) return setErrors(zodErrors(r.error));
     setErrors({});
-    save.mutate({ body: input });
+    save.mutate({ body: toInput(draft) });
   };
 
   const hexOk = /^#[0-9a-fA-F]{6}$/.test(draft.brandColor);

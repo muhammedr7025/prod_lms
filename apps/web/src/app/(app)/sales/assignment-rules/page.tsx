@@ -1,5 +1,5 @@
 import { salesContract } from '@exatech/contracts';
-import { RulesScreen } from '@/features/sales';
+import { RulesScreen } from '@/features/sales/components/rules-screen';
 import { Prefetch, q } from '@/lib/prefetch';
 
 export const metadata = { title: 'Assignment rules' };

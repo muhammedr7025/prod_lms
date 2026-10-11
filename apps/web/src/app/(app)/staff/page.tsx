@@ -1,5 +1,5 @@
 import { institutionStaffContract } from '@exatech/contracts';
-import { StaffScreen } from '@/features/staff';
+import { StaffScreen } from '@/features/staff/components/staff-screen';
 import { Prefetch, q } from '@/lib/prefetch';
 
 export const metadata = { title: 'Staff & teachers' };

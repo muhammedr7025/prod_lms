@@ -41,7 +41,7 @@ pnpm install && pnpm setup:local
 (cd apps/api && node dist/main.js > /tmp/exa-$EXA-api.log 2>&1 &)        # rebuild with `pnpm --filter @exatech/api build` after API changes, then restart
 (cd apps/web && npx next dev --port $WEB_PORT > /tmp/exa-$EXA-web.log 2>&1 &)
 ```
-`pnpm --filter @exatech/db seed` resets demo data any time (it truncates everything). Seed dates are relative to today (IST).
+`pnpm db:seed` (or `pnpm --filter @exatech/db seed`) resets demo data any time (it truncates everything); the db scripts read `apps/api/.env` when `DATABASE_URL` is not exported. Seed dates are relative to today (IST).
 
 ### Demo personas (seed)
 Deepu S Nath (Super Admin, `deepu@exatech.test`) · Priya Varghese (Branch Admin TVM + Teacher DA-C, `priya@`) · Meera Pillai (Sales, `meera@`) · Sanjay Kumar (Sales Manager TVM + Teacher FS-B/FS-C, `sanjay@`) · Joseph Mathew (Finance TVM·EKM + Branch Admin EKM, `joseph@`) · Rema Nair (cashier, `rema@`) · Nithin Raj (Teacher DM-A Search·SEO / DM-B Paid media, `nithin@`) · Anjali Menon (Student DM-A, TVM-DM-2027-00142, instalment 2 ₹15,000 overdue → fee-gated notes **locked**, `anjali.menon@example.test`) · Suresh Menon (Parent of Anjali + Rohan, `suresh.menon@example.test`). Rohan Menon (FS-B, TVM-FS-2027-00098) ₹15,000 overdue 10 days, attendance ~69%, 2 assignments missed. Admissions queue: Aiswarya Suresh (FS-C, 22% → waiting Super Admin), Divya Pillai (DM-B, ready for Branch Admin), Kiran Thomas & Neha George (Finance queue), Ashwin Mohan (returned to Sales).
@@ -91,7 +91,7 @@ Put your module's schemas in `packages/contracts/src/modules/<module>.ts` and ad
     return <Prefetch queries={[q(salesContract.pipeline, { query: {} })]}><PipelineScreen /></Prefetch>;
   }
   ```
-- Feature code lives in `src/features/<feature>/{components,hooks,…}` with an `index.ts` public API.
+- Feature code lives in `src/features/<feature>/{components,hooks,…}` with an `index.ts` public API. **Route files import the screen from its component file** (`@/features/sales/components/leads-screen`), never the barrel — a barrel imported from a server component puts the whole feature into that route's client JS.
 - Data: `useApi(contract, { params, query })` and `useApiMutation(contract, { invalidate: [['sales']], success: 'Lead created' })`. Query keys are path segments (`['api','sales','leads',…]`) — invalidate by prefix. Money/marks: invalidate, never optimistic. Attendance taps / visibility toggles may be optimistic.
 - Me/permissions: `useMe()`, `useCan('finance:payment.collect')`, `useBranch()`. Detail panels: `useDrawer().open('student' | 'teacher' | 'branch' | 'exam', id)`; drawer components use `<DrawerLayout kicker title sub tag>`.
 - UI kit (`@exatech/ui`): `Page`, `PageHeader`, `Grid`, `Card` (blueprint corners by default; `tone` = white|line|tint|surface|ink|accent|dashed; `pad`), `CardButton`, `CardHead`, `Kicker`, `CardTitle`, `CardBody`, `CardMeta`, `Stat`, `Bar`, `Button` (`variant` primary|secondary|ghost|ink|white, `size` sm|md|lg|xl|icon, `blueprint` for the main CTA, `loading`), `Tag` (accent|neutral|outline|ink|solid|plain), `Input`, `Textarea`, `Select` (native), `Field` (label+error, auto-associated), `Seg`, `Checkbox`, `Radio`, `Table/TH/TD/TR/TableScroll/Sub/Mono`, `Dialog` (kicker/title/footer), `Sheet`, `Popover`, `Icon` (prototype icon set), `toast()` (with `undo`), `Issue` (Blocked/Needed/OK lines), `Row`, `LinkButton`, `EmptyState`, `Skeleton`.
@@ -99,6 +99,8 @@ Put your module's schemas in `packages/contracts/src/modules/<module>.ts` and ad
 - Staff screens are desktop-first (sidebar collapses < 900 px; tables scroll horizontally with `TableScroll minWidth`). Portal screens (teacher/student/parent) are mobile-first inside a 480 px column with bottom nav; touch targets ≥ 44 px (`size="lg"`/`min-h-11`).
 - Every blocking validation states its reason inline (`<Issue kind="blocked">…`). Disabled buttons need a visible reason nearby.
 - No `any`, no hard-coded demo data in UI: everything comes from the API. Empty, loading (skeletons sized to content) and error states for every list.
+- **Validation is the API's job.** In the browser `zod` is aliased to an inert stub (`src/lib/zod-browser.js`) — contract schemas exist only for types, and `.parse/.safeParse` throw. Send the input and show the API's per-field messages: `onError: (e) => setErrors(apiErrors(e))`. Simple presence checks (e.g. "Enter the capacity") can stay inline.
+- **Bundle budget: 180 kB first-load JS per route** (PRD NFR) — check the `next build` table. Load anything not needed for first paint with `next/dynamic` (dialogs opened by a tap, success animations, the ⌘K palette). Only `/sales/pipeline` exceeds it (214 kB: `motion` for the PRD's spring-physics card drag).
 
 ## Quality bar (definition of done for a screen/flow)
 1. Matches the prototype screen (layout, copy, columns, actions, states) and the PRD rules.
@@ -109,7 +111,7 @@ Put your module's schemas in `packages/contracts/src/modules/<module>.ts` and ad
 
 ## Gotchas
 - zsh: never name a shell variable `path` (it is tied to `PATH`).
-- `@exatech/db`, `@exatech/contracts`, `@exatech/domain` are consumed from `dist/` — rebuild them after edits (`pnpm --filter <pkg> build`).
+- `@exatech/db`, `@exatech/contracts`, `@exatech/domain` are consumed from `dist/` — rebuild them after edits (`pnpm --filter <pkg> build`). Contracts and domain build twice: CommonJS (`dist/`, the API) and ESM (`dist/esm/`, the web — tree-shaken, `sideEffects: false`). After changing package.json/exports, delete `apps/web/.next/cache` or webpack may keep resolving the old build.
 - Drizzle uses `casing: 'snake_case'`; TS field names are camelCase.
 - `numeric({mode:'number'})` columns come back as numbers; raw `sql` counts come back as strings — wrap with `Number()`.
 - Next.js 15: `params`/`searchParams` in pages are Promises.

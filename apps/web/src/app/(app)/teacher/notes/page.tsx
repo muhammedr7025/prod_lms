@@ -1,5 +1,5 @@
 import { teachingMaterialsContract } from '@exatech/contracts';
-import { NotesScreen } from '@/features/teacher';
+import { NotesScreen } from '@/features/teacher/components/notes-screen';
 import { Prefetch, q } from '@/lib/prefetch';
 
 export const metadata = { title: 'Notes & material' };

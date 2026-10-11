@@ -1,5 +1,5 @@
 import { financeContract } from '@exatech/contracts';
-import { DuesScreen } from '@/features/finance';
+import { DuesScreen } from '@/features/finance/components/dues-screen';
 import { Prefetch, q } from '@/lib/prefetch';
 
 export const metadata = { title: 'Dues & follow-up' };

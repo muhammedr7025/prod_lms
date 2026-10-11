@@ -1,11 +1,11 @@
 'use client';
 
-import { institutionStaffContract, LEAVE_TYPES, zInviteInput, type InstStaffDetail } from '@exatech/contracts';
+import { institutionStaffContract, LEAVE_TYPES, type InstStaffDetail } from '@exatech/contracts';
 import { isValidPhone, todayIST } from '@exatech/domain';
 import { Button, Dialog, EmptyState, Field, Input, Issue, Select, Skeleton, Table, TableScroll, Tag, Textarea, TD, TH } from '@exatech/ui';
 import { useEffect, useMemo, useState } from 'react';
 import { useMe } from '@/components/me-context';
-import { apiErrors, zodErrors, type FieldErrors } from '@/features/institution';
+import { apiErrors, type FieldErrors } from '@/features/institution/components/parts';
 import { useApi, useApiMutation } from '@/lib/hooks';
 import { MembershipEditor, toDrafts, toInputs, type MembershipDraft } from './membership-editor';
 
@@ -46,8 +46,7 @@ export function InviteDialog({ open, onClose, onInvited }: { open: boolean; onCl
   });
   const submit = () => {
     const body = { name, email, phone, homeBranchId: home, title: title.trim() || null, memberships: toInputs(memberships) };
-    const r = zInviteInput.safeParse(body);
-    const e: FieldErrors = r.success ? {} : zodErrors(r.error);
+    const e: FieldErrors = {};
     if (!home) e.homeBranchId = 'Choose the home branch';
     if (phone && !isValidPhone(phone)) e.phone = 'Enter a valid 10-digit mobile';
     if (memberships.some((m) => !m.roleId)) e.memberships = 'Choose a role for every membership (or remove the empty row)';

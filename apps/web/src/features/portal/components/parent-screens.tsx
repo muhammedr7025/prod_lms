@@ -9,7 +9,7 @@ import { useMe } from '@/components/me-context';
 import { useApi, useApiMutation } from '@/lib/hooks';
 import { useChildSelection } from '../lib';
 import { ChildSwitcher, ChoiceSeg, FeeCardView, LoadError, ScreenHeader } from './parts';
-import { usePaySheet } from './pay-sheet';
+import { usePaySheet } from './use-pay-sheet';
 import { FeesScreen } from './fees-screen';
 import { MarksScreen } from './marks-screen';
 

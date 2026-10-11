@@ -1,5 +1,5 @@
 import { approvalsContract, institutionContract } from '@exatech/contracts';
-import { OverviewScreen } from '@/features/institution';
+import { OverviewScreen } from '@/features/institution/components/overview-screen';
 import { Prefetch, q } from '@/lib/prefetch';
 
 export const metadata = { title: 'Overview' };

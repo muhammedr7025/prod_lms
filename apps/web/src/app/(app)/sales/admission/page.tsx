@@ -1,6 +1,6 @@
 import { admissionsContract, salesContract } from '@exatech/contracts';
 import { Suspense } from 'react';
-import { AdmissionWizard } from '@/features/admissions';
+import { AdmissionWizard } from '@/features/admissions/components/admission-wizard';
 import { Prefetch, q, type PrefetchEntry } from '@/lib/prefetch';
 
 export const metadata = { title: 'New admission' };

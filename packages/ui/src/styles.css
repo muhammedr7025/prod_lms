@@ -50,6 +50,10 @@
 }
 @keyframes exa-spin { to { transform: rotate(360deg); } }
 @keyframes exa-pulse { 0%,100% { opacity: .55 } 50% { opacity: 1 } }
+@keyframes exa-count-in {
+  from { transform: translateY(60%); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
 
 .animate-rise { animation: exa-rise 0.2s cubic-bezier(0.2, 0.8, 0.2, 1); }
 .animate-slide-in { animation: exa-slide-in 0.22s cubic-bezier(0.2, 0.8, 0.2, 1); }
@@ -57,9 +61,10 @@
 .animate-wiggle { animation: exa-wiggle 0.25s ease; }
 .animate-spin-exa { animation: exa-spin 0.8s linear infinite; }
 .animate-pulse-exa { animation: exa-pulse 1.4s ease-in-out infinite; }
+.animate-count-in { animation: exa-count-in 0.15s ease-out; }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-rise, .animate-slide-in, .animate-fade, .animate-wiggle { animation: none; }
+  .animate-rise, .animate-slide-in, .animate-fade, .animate-wiggle, .animate-count-in { animation: none; }
 }
 
 .tabular { font-variant-numeric: tabular-nums; }

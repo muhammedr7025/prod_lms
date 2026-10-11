@@ -1,5 +1,5 @@
 import { portalContract } from '@exatech/contracts';
-import { ParentAlerts } from '@/features/portal';
+import { ParentAlerts } from '@/features/portal/components/parent-screens';
 import { Prefetch, q } from '@/lib/prefetch';
 
 export const metadata = { title: 'Alerts' };

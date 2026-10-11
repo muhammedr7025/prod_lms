@@ -1,5 +1,5 @@
 import { salesContract } from '@exatech/contracts';
-import { FunnelScreen } from '@/features/sales';
+import { FunnelScreen } from '@/features/sales/components/funnel-screen';
 import { Prefetch, q } from '@/lib/prefetch';
 
 export const metadata = { title: 'Funnel' };

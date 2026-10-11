@@ -8,7 +8,7 @@ import { ApiError, callApi } from '@/lib/api';
 import { useApi } from '@/lib/hooks';
 import { prefersReducedMotion } from '../lib';
 import { LoadError, ScreenHeader, TypeIcon } from './parts';
-import { usePaySheet } from './pay-sheet';
+import { usePaySheet } from './use-pay-sheet';
 
 /** Student · Notes — by module; locked items wiggle then open the pay sheet; open items get a 5-minute signed (watermarked) link. */
 export function NotesScreen() {

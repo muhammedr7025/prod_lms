@@ -1,10 +1,10 @@
 'use client';
 
-import { DOCUMENT_PATHS, paymentsContract, type Order, type PayInfo } from '@exatech/contracts';
+import { paymentsContract, type Order, type PayInfo } from '@exatech/contracts';
 import { formatINR } from '@exatech/domain';
-import { Button, Dialog, Field, Icon, Input, Issue, Kicker, Spinner, Tag } from '@exatech/ui';
+import { Button, Dialog, Field, Icon, Input, Issue, Spinner, Tag } from '@exatech/ui';
 import { useQueryClient } from '@tanstack/react-query';
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useMe } from '@/components/me-context';
 import { ApiError, callApi } from '@/lib/api';
@@ -12,10 +12,13 @@ import { invalidatePrefixes, useApi } from '@/lib/hooks';
 import { rupeesToPaise } from '../lib';
 import { ChoiceSeg } from './parts';
 
+/** The success animation (motion) loads only when a payment completes — keeps it out of the portal's first load. */
+const PaidView = dynamic(() => import('./pay-success').then((m) => m.PaidView), { ssr: false, loading: () => <Spinner /> });
+
 type Purpose = 'next_due' | 'custom' | 'full';
 type Phase = 'choose' | 'creating' | 'waiting' | 'paid' | 'failed';
 
-interface Row {
+export interface Row {
   studentId: string;
   name: string;
   amount: number;
@@ -78,6 +81,10 @@ export function PaySheet({ open, onOpenChange, targets, all = false }: { open: b
   const [purpose, setPurpose] = useState<Purpose>('next_due');
   const [custom, setCustom] = useState('');
   const [phase, setPhase] = useState<Phase>('choose');
+  // Fetch the success view while checkout is open so it is ready the moment the webhook lands.
+  useEffect(() => {
+    if (phase === 'creating' || phase === 'waiting') void import('./pay-success');
+  }, [phase]);
   const [error, setError] = useState<string | null>(null);
   const [rows, setRows] = useState<Row[]>([]);
   const [current, setCurrent] = useState(0);
@@ -353,88 +360,4 @@ function Progress({ rows, current }: { rows: Row[]; current: number }) {
       ))}
     </div>
   );
-}
-
-/** Checkmark draws on, receipt card slides up, fee badge morphs Overdue → Paid (400 ms; static under reduced motion). */
-function PaidView({ rows, from }: { rows: Row[]; from: string }) {
-  const reduce = useReducedMotion();
-  const [morphed, setMorphed] = useState(!!reduce);
-  useEffect(() => {
-    if (reduce) return;
-    const t = setTimeout(() => setMorphed(true), 450);
-    return () => clearTimeout(t);
-  }, [reduce]);
-  const d = reduce ? 0 : 0.4;
-  return (
-    <div className="grid gap-3" data-testid="pay-success">
-      <div className="flex items-center gap-3">
-        <svg width="44" height="44" viewBox="0 0 44 44" aria-hidden className="flex-none">
-          <motion.circle cx="22" cy="22" r="20" fill="none" stroke="var(--color-accent)" strokeWidth="2" initial={{ pathLength: reduce ? 1 : 0 }} animate={{ pathLength: 1 }} transition={{ duration: d }} />
-          <motion.path d="M13 22.5l6 6 12-13" fill="none" stroke="var(--color-accent)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" initial={{ pathLength: reduce ? 1 : 0 }} animate={{ pathLength: 1 }} transition={{ duration: d, delay: reduce ? 0 : 0.15 }} />
-        </svg>
-        <div className="min-w-0">
-          <Kicker>Payment received</Kicker>
-          <div className="text-[13px]">Fee status</div>
-        </div>
-        <span className="flex-1" />
-        <span className="relative inline-grid" aria-live="polite">
-          <AnimatePresence initial={false} mode="popLayout">
-            {!morphed ? (
-              <motion.span key="before" exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: 0.2 }}>
-                <Tag variant="ink">{from}</Tag>
-              </motion.span>
-            ) : (
-              <motion.span key="paid" initial={reduce ? false : { opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.2 }}>
-                <Tag variant="accent" data-testid="fee-badge">
-                  Paid
-                </Tag>
-              </motion.span>
-            )}
-          </AnimatePresence>
-        </span>
-      </div>
-      {rows
-        .filter((r) => r.status === 'paid')
-        .map((r, i) => (
-          <motion.div
-            key={r.studentId}
-            initial={reduce ? false : { y: 16, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: d, delay: reduce ? 0 : 0.1 + i * 0.08, ease: 'easeOut' }}
-            className="relative border border-divider bg-surface p-3 grid gap-1"
-            data-testid="pay-receipt"
-          >
-            <div className="flex justify-between gap-2 items-baseline">
-              <span className="text-[13px] font-medium">{r.name}</span>
-              <span className="font-heading font-semibold text-lg tabular">{formatINR(r.amount)}</span>
-            </div>
-            <div className="text-[13px]">
-              Receipt <span className="font-mono text-xs">{r.receiptNumber ?? 'being issued…'}</span>
-            </div>
-            <div className="text-xs text-neutral-600">Receipt sent by WhatsApp + email · fee-gated notes unlock now</div>
-            {r.receiptId && (
-              <a href={DOCUMENT_PATHS.receipt(r.receiptId)} target="_blank" rel="noreferrer" className="text-[13px] text-accent-800 underline underline-offset-[3px] w-fit min-h-11 inline-flex items-center">
-                Download receipt (PDF)
-              </a>
-            )}
-          </motion.div>
-        ))}
-    </div>
-  );
-}
-
-/** Hook: one pay sheet per screen. `open(pay)` for one child, `open([a, b])` for several. */
-export function usePaySheet() {
-  const [targets, setTargets] = useState<PayInfo[]>([]);
-  const [all, setAll] = useState(false);
-  const [open, setOpen] = useState(false);
-  const show = useCallback((t: PayInfo | PayInfo[] | null | undefined, opts: { all?: boolean } = {}) => {
-    const list = (Array.isArray(t) ? t : t ? [t] : []).filter(Boolean);
-    if (!list.length) return;
-    setTargets(list);
-    setAll(!!opts.all);
-    setOpen(true);
-  }, []);
-  const element = <PaySheet open={open} onOpenChange={setOpen} targets={targets} all={all} />;
-  return { open: show, element };
 }

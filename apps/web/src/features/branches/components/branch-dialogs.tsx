@@ -1,10 +1,10 @@
 'use client';
 
-import { institutionBranchesContract, referenceContract, ROOM_KINDS, zBranchCreate, zBranchUpdate, zRoomInput, type InstBranchCard, type InstRoom } from '@exatech/contracts';
+import { institutionBranchesContract, referenceContract, ROOM_KINDS, type InstBranchCard, type InstRoom } from '@exatech/contracts';
 import { todayIST } from '@exatech/domain';
 import { Button, Checkbox, Dialog, EmptyState, Field, Input, Issue, Select, Skeleton, Table, TableScroll, Tag, TD, TH, cn } from '@exatech/ui';
 import { useEffect, useMemo, useState } from 'react';
-import { apiErrors, rupeesToPaise, zodErrors, type FieldErrors } from '@/features/institution';
+import { apiErrors, rupeesToPaise, type FieldErrors } from '@/features/institution/components/parts';
 import { useApi, useApiMutation } from '@/lib/hooks';
 
 const KIND_LABEL: Record<(typeof ROOM_KINDS)[number], string> = { room: 'Room', lab: 'Lab', hall: 'Hall' };
@@ -100,14 +100,10 @@ export function BranchFormDialog({ open, onClose, branch, onCreated }: { open: b
     }
     if (editing) {
       const body = { ...base, status: f.status, statusNote: f.statusNote.trim() || null };
-      const r = zBranchUpdate.safeParse(body);
-      if (!r.success) return setErrors(zodErrors(r.error));
       setErrors({});
       update.mutate({ params: { id: branch!.id }, body });
     } else {
       const body = { ...base, code: f.code, rooms: rooms.map((x) => ({ name: x.name, capacity: Number(x.capacity), kind: x.kind })) };
-      const r = zBranchCreate.safeParse(body);
-      if (!r.success) return setErrors(zodErrors(r.error));
       setErrors({});
       create.mutate({ body });
     }
@@ -244,12 +240,11 @@ function RoomRow({ room, canManage }: { room: InstRoom; canManage: boolean }) {
       setBlocked(null);
       setErr(null);
     },
-    onError: (e) => (e.code === 'ROOM_IN_USE' ? setBlocked(e.message) : setErr(e.message)),
+    onError: (e) => (e.code === 'ROOM_IN_USE' ? setBlocked(e.message) : setErr(Object.values(e.fields ?? {})[0] ?? e.message)),
   });
   const submit = (active: boolean, confirm = false) => {
     const body = { name, capacity: Number(capacity), kind, active, confirm };
-    const r = zRoomInput.safeParse(body);
-    if (!r.success) return setErr(r.error.issues[0]?.message ?? 'Check the room');
+    if (capacity === '' || Number.isNaN(Number(capacity))) return setErr('Enter the capacity');
     setErr(null);
     save.mutate({ params: { id: room.id }, body });
   };
@@ -335,8 +330,8 @@ export function RoomsDialog({ branchId, branchName, open, onClose }: { branchId:
   });
   const submit = () => {
     const body = { name, capacity: Number(capacity), kind };
-    const r = zRoomInput.safeParse({ ...body, capacity: capacity.trim() === '' ? undefined : Number(capacity) });
-    if (!r.success) return setErr(zodErrors(r.error));
+    if (capacity.trim() === '') return setErr({ capacity: 'Enter the capacity' });
+    setErr({});
     add.mutate({ params: { id: branchId }, body });
   };
   const rooms = detail.data?.rooms ?? [];

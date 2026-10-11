@@ -1,4 +1,4 @@
-import { InvoicesScreen } from '@/features/finance';
+import { InvoicesScreen } from '@/features/finance/components/invoices-screen';
 
 export const metadata = { title: 'Invoices & receipts' };
 

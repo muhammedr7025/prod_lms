@@ -1,5 +1,5 @@
 import { financeContract } from '@exatech/contracts';
-import { AccountsScreen } from '@/features/finance';
+import { AccountsScreen } from '@/features/finance/components/accounts-screen';
 import { Prefetch, q } from '@/lib/prefetch';
 
 export const metadata = { title: 'Student fee accounts' };

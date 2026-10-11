@@ -1,5 +1,5 @@
 import { portalContract } from '@exatech/contracts';
-import { TimetableScreen } from '@/features/portal';
+import { TimetableScreen } from '@/features/portal/components/timetable-screen';
 import { Prefetch, q } from '@/lib/prefetch';
 
 export const metadata = { title: 'Timetable' };

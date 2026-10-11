@@ -3,6 +3,7 @@
 import { coreContract, type Me } from '@exatech/contracts';
 import { Button, cn, Icon, Toaster } from '@exatech/ui';
 import { useQueryClient } from '@tanstack/react-query';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
@@ -13,10 +14,12 @@ import { IdleWatcher } from '../idle-watcher';
 import { MeProvider, useMe } from '../me-context';
 import { RealtimeBridge } from '../realtime';
 import { AccountMenu } from './account-menu';
-import { CommandPalette } from './command-palette';
 import { ImpersonationBanner } from './impersonation-banner';
 import { navFor } from './nav';
 import { NotificationBell } from './notification-bell';
+
+/** ⌘K palette (cmdk) loads on first open — it is not needed for the first paint. */
+const CommandPalette = dynamic(() => import('./command-palette').then((m) => m.CommandPalette), { ssr: false });
 
 export function AppShell({ me, children }: { me: Me; children: ReactNode }) {
   return (
@@ -47,6 +50,10 @@ function ShellInner({ children }: { children: ReactNode }) {
   const narrow = useNarrow();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [paletteUsed, setPaletteUsed] = useState(false);
+  useEffect(() => {
+    if (paletteOpen) setPaletteUsed(true);
+  }, [paletteOpen]);
   const pathname = usePathname();
 
   useEffect(() => setSidebarOpen(false), [pathname]);
@@ -103,7 +110,7 @@ function ShellInner({ children }: { children: ReactNode }) {
         <main className="flex-1 min-w-0 bg-white">{isStaff ? children : <PortalFrame>{children}</PortalFrame>}</main>
       </div>
 
-      {isStaff && <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />}
+      {isStaff && (paletteOpen || paletteUsed) && <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />}
       <Toaster bottom={isStaff ? 24 : 76} />
       <RealtimeBridge branchKey={`${me.membership.id}:${me.branch.selectedId ?? 'all'}`} />
       <IdleWatcher minutes={me.session.idleTimeoutMin} />

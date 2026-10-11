@@ -1,3 +1,4 @@
+import path from 'node:path';
 import type { NextConfig } from 'next';
 
 const API_URL = process.env.API_URL ?? 'http://localhost:4300';
@@ -25,6 +26,11 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     optimizePackageImports: ['@exatech/ui'],
+  },
+  webpack(config, { isServer }) {
+    // Contract schemas are types-only in the browser (the API validates); see src/lib/zod-browser.js.
+    if (!isServer) config.resolve.alias = { ...config.resolve.alias, zod$: path.join(__dirname, 'src/lib/zod-browser.js') };
+    return config;
   },
 };
 

@@ -6,7 +6,7 @@ import { Button, buttonVariants, Card, cn, Issue, Kicker, Skeleton, Tag } from '
 import { useApi } from '@/lib/hooks';
 import { printPdf } from '../lib';
 import { LoadError, ScreenHeader } from './parts';
-import { usePaySheet } from './pay-sheet';
+import { usePaySheet } from './use-pay-sheet';
 
 /** Student / Parent · Fees — instalments, Pay now, invoices & receipts; parents also pay for every child. */
 export function FeesScreen({ studentId, label, siblings }: { studentId?: string; label: string; siblings?: PortalChild[] }) {

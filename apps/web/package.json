@@ -2,6 +2,7 @@
   "name": "@exatech/web",
   "version": "1.0.0",
   "private": true,
+  "sideEffects": ["*.css"],
   "scripts": {
     "dev": "next dev --port 3300",
     "build": "next build",

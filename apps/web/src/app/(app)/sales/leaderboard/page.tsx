@@ -1,5 +1,5 @@
 import { salesContract } from '@exatech/contracts';
-import { LeaderboardScreen } from '@/features/sales';
+import { LeaderboardScreen } from '@/features/sales/components/leaderboard-screen';
 import { Prefetch, q } from '@/lib/prefetch';
 
 export const metadata = { title: 'Targets & leaderboard' };

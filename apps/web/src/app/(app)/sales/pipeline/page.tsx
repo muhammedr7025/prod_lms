@@ -1,6 +1,6 @@
 import { salesContract } from '@exatech/contracts';
 import { Suspense } from 'react';
-import { PipelineScreen } from '@/features/sales';
+import { PipelineScreen } from '@/features/sales/components/pipeline-screen';
 import { Prefetch, q } from '@/lib/prefetch';
 
 export const metadata = { title: 'Pipeline' };

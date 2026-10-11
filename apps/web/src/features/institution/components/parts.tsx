@@ -3,7 +3,6 @@
 import type { ApiErrorBody } from '@exatech/contracts';
 import { Card, CardTitle, cn, Kicker } from '@exatech/ui';
 import { useEffect, useState, type ReactNode } from 'react';
-import type { ZodError } from 'zod';
 import type { ApiError } from '@/lib/api';
 
 /** KPI tile inside detail drawers (26 px figure, blueprint corners). */
@@ -46,16 +45,6 @@ export function useSecondsSince(iso: string | null | undefined): number | null {
 }
 
 export type FieldErrors = Record<string, string>;
-
-/** Field errors from a zod parse, keyed by dotted path ("security.staffIdleMinutes"). */
-export function zodErrors(error: ZodError): FieldErrors {
-  const out: FieldErrors = {};
-  for (const issue of error.issues) {
-    const key = issue.path.map(String).join('.') || '_';
-    if (!out[key]) out[key] = issue.message;
-  }
-  return out;
-}
 
 /** Field errors from an API error (validation failures carry `fields`). */
 export function apiErrors(error: ApiError | null | undefined): FieldErrors {

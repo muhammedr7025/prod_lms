@@ -9,7 +9,7 @@ import { useMe } from '@/components/me-context';
 import { callApi } from '@/lib/api';
 import { invalidatePrefixes, useApi, useApiMutation } from '@/lib/hooks';
 import { FeeCardView, LoadError } from './parts';
-import { usePaySheet } from './pay-sheet';
+import { usePaySheet } from './use-pay-sheet';
 
 /** Student · Home — fee card, attendance ring + next session, pending work, upcoming exam, announcement, QR check-in. */
 export function StudentHome() {

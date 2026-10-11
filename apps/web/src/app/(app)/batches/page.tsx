@@ -1,5 +1,5 @@
 import { academicsBatchesContract } from '@exatech/contracts';
-import { BatchesScreen } from '@/features/academics';
+import { BatchesScreen } from '@/features/academics/components/batches-screen';
 import { Prefetch, q } from '@/lib/prefetch';
 
 export const metadata = { title: 'Courses & batches' };

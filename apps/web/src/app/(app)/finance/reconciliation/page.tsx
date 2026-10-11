@@ -1,5 +1,5 @@
 import { financeContract } from '@exatech/contracts';
-import { ReconciliationScreen } from '@/features/finance';
+import { ReconciliationScreen } from '@/features/finance/components/reconciliation-screen';
 import { Prefetch, q } from '@/lib/prefetch';
 
 export const metadata = { title: 'Reconciliation' };

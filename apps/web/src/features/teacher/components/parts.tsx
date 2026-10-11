@@ -1,7 +1,6 @@
 'use client';
 
 import { cn, Issue, Kicker, Skeleton } from '@exatech/ui';
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import type { ReactNode } from 'react';
 
 /** Portal screen header (kicker + h2 + optional action), as in the prototype's teacher screens. */
@@ -17,17 +16,13 @@ export function ScreenHeader({ label, kicker, title, action, className }: { labe
   );
 }
 
-/** Number that slides when it changes (150 ms); static under prefers-reduced-motion. */
+/** Number that slides in when it changes (150 ms CSS; static under prefers-reduced-motion). */
 export function AnimatedCount({ value, className }: { value: number; className?: string }) {
-  const reduce = useReducedMotion();
-  if (reduce) return <span className={className}>{value}</span>;
   return (
     <span className={cn('relative inline-grid overflow-hidden', className)}>
-      <AnimatePresence initial={false} mode="popLayout">
-        <motion.span key={value} initial={{ y: '60%', opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: '-60%', opacity: 0 }} transition={{ duration: 0.15, ease: 'easeOut' }} className="col-start-1 row-start-1">
-          {value}
-        </motion.span>
-      </AnimatePresence>
+      <span key={value} className="col-start-1 row-start-1 motion-safe:animate-count-in">
+        {value}
+      </span>
     </span>
   );
 }

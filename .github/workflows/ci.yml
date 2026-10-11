@@ -55,10 +55,16 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm setup:local
       - run: cd apps/web && npx playwright install --with-deps chromium
+      - name: Build web + bundle budget (180 kB first-load JS per route)
+        run: |
+          cd apps/web
+          set -o pipefail
+          npx next build | tee next-build.log
+          node scripts/check-bundle.mjs next-build.log
       - name: Start API and web
         run: |
           (cd apps/api && node dist/main.js > api.log 2>&1 &)
-          (cd apps/web && npx next build && npx next start --port 3300 > web.log 2>&1 &)
+          (cd apps/web && npx next start --port 3300 > web.log 2>&1 &)
           npx wait-on http://localhost:4300/api/health http://localhost:3300/sign-in --timeout 180000
       - name: Playwright
         run: cd apps/web && npx playwright test

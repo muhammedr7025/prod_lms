@@ -1,5 +1,5 @@
 import { institutionRolesContract } from '@exatech/contracts';
-import { RolesScreen } from '@/features/roles';
+import { RolesScreen } from '@/features/roles/components/roles-screen';
 import { Prefetch, q } from '@/lib/prefetch';
 
 export const metadata = { title: 'Roles & permissions' };

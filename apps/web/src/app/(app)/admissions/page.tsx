@@ -1,5 +1,5 @@
 import { admissionsContract } from '@exatech/contracts';
-import { AdmissionsQueueScreen } from '@/features/admissions';
+import { AdmissionsQueueScreen } from '@/features/admissions/components/admissions-queue';
 import { Prefetch, q } from '@/lib/prefetch';
 
 export const metadata = { title: 'Admissions' };

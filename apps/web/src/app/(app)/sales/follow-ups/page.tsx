@@ -1,5 +1,5 @@
 import { salesContract } from '@exatech/contracts';
-import { FollowUpsScreen } from '@/features/sales';
+import { FollowUpsScreen } from '@/features/sales/components/follow-ups-screen';
 import { Prefetch, q } from '@/lib/prefetch';
 
 export const metadata = { title: 'Follow-ups' };

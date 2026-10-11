@@ -1,5 +1,5 @@
 import { portalContract } from '@exatech/contracts';
-import { ParentMarks } from '@/features/portal';
+import { ParentMarks } from '@/features/portal/components/parent-screens';
 import { Prefetch, q, type PrefetchEntry } from '@/lib/prefetch';
 
 export const metadata = { title: 'Marks' };

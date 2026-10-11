@@ -1,5 +1,5 @@
 import { academicsStudentsContract } from '@exatech/contracts';
-import { StudentsScreen } from '@/features/students';
+import { StudentsScreen } from '@/features/students/components/students-screen';
 import { Prefetch, q } from '@/lib/prefetch';
 
 export const metadata = { title: 'Students' };

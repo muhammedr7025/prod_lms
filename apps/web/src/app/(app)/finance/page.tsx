@@ -1,5 +1,5 @@
 import { admissionsContract, financeContract } from '@exatech/contracts';
-import { FinanceDashboardScreen } from '@/features/finance';
+import { FinanceDashboardScreen } from '@/features/finance/components/dashboard-screen';
 import { Prefetch, q } from '@/lib/prefetch';
 
 export const metadata = { title: 'Finance' };

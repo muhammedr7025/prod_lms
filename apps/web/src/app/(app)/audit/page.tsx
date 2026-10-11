@@ -1,5 +1,5 @@
 import { auditContract } from '@exatech/contracts';
-import { AuditLogScreen } from '@/features/audit';
+import { AuditLogScreen } from '@/features/audit/components/audit-log-screen';
 import { Prefetch, q } from '@/lib/prefetch';
 
 export const metadata = { title: 'Audit log' };

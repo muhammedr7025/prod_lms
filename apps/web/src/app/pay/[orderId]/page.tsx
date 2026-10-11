@@ -1,4 +1,4 @@
-import { RazorpayCheckout } from '@/features/finance';
+import { RazorpayCheckout } from '@/features/finance/components/checkout';
 
 export const metadata = { title: 'Pay now' };
 

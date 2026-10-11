@@ -1,5 +1,5 @@
 import { financeContract } from '@exatech/contracts';
-import { AccountScreen } from '@/features/finance';
+import { AccountScreen } from '@/features/finance/components/account-screen';
 import { Prefetch, q } from '@/lib/prefetch';
 
 export const metadata = { title: 'Fee account' };

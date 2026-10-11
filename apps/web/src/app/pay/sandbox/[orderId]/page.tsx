@@ -1,4 +1,4 @@
-import { SandboxCheckout } from '@/features/finance';
+import { SandboxCheckout } from '@/features/finance/components/checkout';
 
 export const metadata = { title: 'Pay now' };
 

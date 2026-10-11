@@ -1,10 +1,10 @@
 'use client';
 
-import { institutionRolesContract, MATRIX_RESOURCES, matrixCell, PERMISSIONS, ROLE_META, SUPERADMIN_LOCKED_PERMISSIONS, SYSTEM_ROLES, zRoleCreate, type InstRole } from '@exatech/contracts';
+import { institutionRolesContract, MATRIX_RESOURCES, matrixCell, PERMISSIONS, ROLE_META, SUPERADMIN_LOCKED_PERMISSIONS, SYSTEM_ROLES, type InstRole } from '@exatech/contracts';
 import { Button, Card, CardBody, CardTitle, Checkbox, Dialog, EmptyState, Field, Grid, Icon, Input, Issue, Kicker, Page, PageHeader, Select, Skeleton, Table, TableScroll, Tag, TD, TH, cn } from '@exatech/ui';
 import { useEffect, useMemo, useState } from 'react';
 import { useMe } from '@/components/me-context';
-import { apiErrors, zodErrors, type FieldErrors } from '@/features/institution';
+import { apiErrors, type FieldErrors } from '@/features/institution/components/parts';
 import { useApi, useApiMutation } from '@/lib/hooks';
 
 const LABEL = new Map<string, string>(PERMISSIONS.map((p) => [p.key, p.label]));
@@ -322,8 +322,6 @@ function NewRoleDialog({ open, onClose, onCreated }: { open: boolean; onClose: (
   });
   const submit = () => {
     const body = { key, name, scopeKind, surface };
-    const r = zRoleCreate.safeParse(body);
-    if (!r.success) return setErrors(zodErrors(r.error));
     create.mutate({ body });
   };
   return (

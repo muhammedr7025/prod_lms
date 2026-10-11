@@ -1,5 +1,5 @@
 import { portalContract } from '@exatech/contracts';
-import { ParentAttendance } from '@/features/portal';
+import { ParentAttendance } from '@/features/portal/components/parent-screens';
 import { Prefetch, q, type PrefetchEntry } from '@/lib/prefetch';
 
 export const metadata = { title: 'Attendance' };

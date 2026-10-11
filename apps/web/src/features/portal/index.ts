@@ -5,4 +5,5 @@ export { WorkScreen } from './components/work-screen';
 export { MarksScreen } from './components/marks-screen';
 export { FeesScreen } from './components/fees-screen';
 export { ParentHome, ParentAttendance, ParentMarks, ParentFees, ParentAlerts } from './components/parent-screens';
-export { PaySheet, usePaySheet } from './components/pay-sheet';
+export { PaySheet } from './components/pay-sheet';
+export { usePaySheet } from './components/use-pay-sheet';

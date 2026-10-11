@@ -1,5 +1,5 @@
 import { commsContract, portalContract } from '@exatech/contracts';
-import { StudentHome } from '@/features/portal';
+import { StudentHome } from '@/features/portal/components/student-home';
 import { Prefetch, q } from '@/lib/prefetch';
 
 export const metadata = { title: 'Home' };

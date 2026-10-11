@@ -1,6 +1,6 @@
 import { salesContract } from '@exatech/contracts';
 import { Suspense } from 'react';
-import { LeadsScreen } from '@/features/sales';
+import { LeadsScreen } from '@/features/sales/components/leads-screen';
 import { Prefetch, q, type PrefetchEntry } from '@/lib/prefetch';
 
 export const metadata = { title: 'Leads' };
