@@ -11,6 +11,8 @@ export const metadata: Metadata = {
   description: 'Exatech institution management platform — enquiry to completion on one system.',
   applicationName: 'Exatech',
   manifest: '/manifest.webmanifest',
+  icons: { icon: '/icon.svg', apple: '/icon.svg' },
+  appleWebApp: { capable: true, title: 'Exatech', statusBarStyle: 'default' },
 };
 
 export const viewport: Viewport = {

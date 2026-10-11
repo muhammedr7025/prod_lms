@@ -1,0 +1,14 @@
+{
+  "name": "Exatech",
+  "short_name": "Exatech",
+  "description": "Exatech institution management — attendance, notes, marks and fees on your phone.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f4faf5",
+  "theme_color": "#4f9d68",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

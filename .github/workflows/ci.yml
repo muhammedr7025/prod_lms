@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 10.21.0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @exatech/domain --filter @exatech/contracts --filter @exatech/db build
+      - name: Domain rules (unit)
+        run: pnpm --filter @exatech/domain test
+      - name: API typecheck & build
+        run: pnpm --filter @exatech/api build
+      - name: Web typecheck
+        run: cd apps/web && npx tsc --noEmit
+
+  e2e:
+    runs-on: ubuntu-latest
+    needs: check
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env: { POSTGRES_USER: exatech, POSTGRES_PASSWORD: exatech, POSTGRES_DB: exatech }
+        ports: ['5432:5432']
+        options: --health-cmd "pg_isready -U exatech" --health-interval 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+      minio:
+        image: bitnami/minio:latest
+        env: { MINIO_ROOT_USER: minioadmin, MINIO_ROOT_PASSWORD: minioadmin }
+        ports: ['9000:9000']
+      mailpit:
+        image: axllent/mailpit:latest
+        ports: ['1025:1025', '8025:8025']
+    env:
+      DATABASE_URL: postgres://exatech:exatech@localhost:5432/exatech
+      DEMO_MODE: 'true'
+      NODE_ENV: development
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 10.21.0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm setup:local
+      - run: cd apps/web && npx playwright install --with-deps chromium
+      - name: Start API and web
+        run: |
+          (cd apps/api && node dist/main.js > api.log 2>&1 &)
+          (cd apps/web && npx next build && npx next start --port 3300 > web.log 2>&1 &)
+          npx wait-on http://localhost:4300/api/health http://localhost:3300/sign-in --timeout 180000
+      - name: Playwright
+        run: cd apps/web && npx playwright test
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-artifacts
+          path: |
+            apps/web/test-results
+            apps/api/api.log
+            apps/web/web.log

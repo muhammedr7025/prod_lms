@@ -63,6 +63,7 @@ function ShellInner({ children }: { children: ReactNode }) {
   }, [isStaff]);
 
   const showAside = isStaff && (!narrow || sidebarOpen);
+  useBrandTheme(me.institution.brandColor);
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-sm">
@@ -108,6 +109,36 @@ function ShellInner({ children }: { children: ReactNode }) {
       <IdleWatcher minutes={me.session.idleTimeoutMin} />
     </div>
   );
+}
+
+const DEFAULT_BRAND = '#4f9d68';
+
+/**
+ * Institution brand colour applied as the primary token at runtime (Settings →
+ * Identity). Ramps are derived with color-mix so tints and pressed states follow.
+ * Set on :root so portalled dialogs and drawers pick it up too.
+ */
+function useBrandTheme(brand: string) {
+  useEffect(() => {
+    if (!/^#[0-9a-f]{6}$/i.test(brand) || brand.toLowerCase() === DEFAULT_BRAND) return;
+    const root = document.documentElement.style;
+    const vars: Record<string, string> = {
+      '--color-accent': brand,
+      '--color-accent-100': `color-mix(in srgb, ${brand} 10%, white)`,
+      '--color-accent-200': `color-mix(in srgb, ${brand} 22%, white)`,
+      '--color-accent-300': `color-mix(in srgb, ${brand} 40%, white)`,
+      '--color-accent-400': `color-mix(in srgb, ${brand} 65%, white)`,
+      '--color-accent-500': `color-mix(in srgb, ${brand} 88%, white)`,
+      '--color-accent-600': `color-mix(in srgb, ${brand} 85%, black)`,
+      '--color-accent-700': `color-mix(in srgb, ${brand} 68%, black)`,
+      '--color-accent-800': `color-mix(in srgb, ${brand} 48%, black)`,
+      '--color-accent-900': `color-mix(in srgb, ${brand} 32%, black)`,
+    };
+    for (const [k, v] of Object.entries(vars)) root.setProperty(k, v);
+    return () => {
+      for (const k of Object.keys(vars)) root.removeProperty(k);
+    };
+  }, [brand]);
 }
 
 function BranchSwitcher() {
