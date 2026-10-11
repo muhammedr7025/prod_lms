@@ -14,7 +14,7 @@ export type QueueName = 'imports' | 'reminders' | 'documents' | 'maintenance';
 export class QueueService implements OnModuleDestroy {
   private readonly log = new Logger('Queue');
   private readonly queues = new Map<QueueName, Queue>();
-  private readonly processors = new Map<QueueName, { fn: Processor; concurrency: number }>();
+  private readonly processors = new Map<QueueName, { handlers: { fn: Processor; jobNames: string[] | null }[]; concurrency: number }>();
   private readonly workers: Worker[] = [];
 
   constructor(private readonly redis: RedisService) {}
@@ -32,15 +32,28 @@ export class QueueService implements OnModuleDestroy {
     return this.queue(name).add(jobName, data, { removeOnComplete: 500, removeOnFail: 1000, attempts: 3, backoff: { type: 'exponential', delay: 5000 }, ...opts });
   }
 
-  /** Register the processor for a queue (call from a module's onModuleInit). */
-  process(name: QueueName, fn: Processor, concurrency = 2): void {
-    this.processors.set(name, { fn, concurrency });
+  /**
+   * Register a processor for a queue (call from a module's onModuleInit).
+   * Several modules may share a queue: pass `jobNames` to receive only those
+   * jobs; handlers without `jobNames` receive every job on the queue.
+   */
+  process(name: QueueName, fn: Processor, concurrency = 2, jobNames?: string[]): void {
+    const entry = this.processors.get(name) ?? { handlers: [], concurrency };
+    entry.handlers.push({ fn, jobNames: jobNames ?? null });
+    entry.concurrency = Math.max(entry.concurrency, concurrency);
+    this.processors.set(name, entry);
   }
 
   /** Start workers for every registered processor — worker process only. */
   startWorkers(): void {
-    for (const [name, { fn, concurrency }] of this.processors) {
-      const w = new Worker(name, fn, { connection: this.redis.bullConnection(), prefix: `${env().REDIS_PREFIX}:bull`, concurrency });
+    for (const [name, { handlers, concurrency }] of this.processors) {
+      const dispatch: Processor = async (job, token) => {
+        const matching = handlers.filter((h) => !h.jobNames || h.jobNames.includes(job.name));
+        let result: unknown;
+        for (const h of matching) result = await h.fn(job, token);
+        return result;
+      };
+      const w = new Worker(name, dispatch, { connection: this.redis.bullConnection(), prefix: `${env().REDIS_PREFIX}:bull`, concurrency });
       w.on('failed', (job, err) => this.log.warn(`${name}/${job?.name} failed: ${err.message}`));
       this.workers.push(w);
       this.log.log(`worker started: ${name} ×${concurrency}`);

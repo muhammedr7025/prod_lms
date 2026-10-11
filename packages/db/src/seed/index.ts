@@ -1275,9 +1275,34 @@ export async function seed(url = process.env.DATABASE_URL, anchorArg?: string) {
     /* ── parent messages / PTM ── */
     await db.insert(s.parentMessage).values({ guardianUserId: sureshUserId, studentId: rohan.id, teacherUserId: userIds.sanjay, body: 'Could you share how Rohan is doing in React sprint 2?', status: 'delivered', reply: 'He is catching up — attendance is the main concern.' });
 
+    await flushApiCaches();
     console.log(`✓ seeded · anchor ${anchor} · ${students.length} students · ${leadRows.length} leads · ${finEvents.length} finance documents`);
   } finally {
     await h.close();
+  }
+}
+
+/**
+ * A reseed replaces every id, so drop the API's Redis caches (memberships,
+ * branches, public config…) and bump the access version that keys them.
+ */
+async function flushApiCaches(): Promise<void> {
+  const prefix = process.env.REDIS_PREFIX ?? 'exa';
+  const { default: IORedis } = await import('ioredis');
+  const redis = new IORedis(process.env.REDIS_URL ?? 'redis://localhost:6379/0', { lazyConnect: true, maxRetriesPerRequest: 1 });
+  try {
+    await redis.connect();
+    let cursor = '0';
+    do {
+      const [next, keys] = await redis.scan(cursor, 'MATCH', `${prefix}:cache:*`, 'COUNT', 500);
+      cursor = next;
+      if (keys.length) await redis.del(...keys);
+    } while (cursor !== '0');
+    await redis.incr(`${prefix}:access:ver`);
+  } catch (err) {
+    console.warn(`(could not flush API caches in Redis: ${(err as Error).message})`);
+  } finally {
+    redis.disconnect();
   }
 }
 

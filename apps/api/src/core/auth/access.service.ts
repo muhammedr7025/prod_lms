@@ -31,7 +31,7 @@ export interface InstitutionInfo {
  */
 @Injectable()
 export class AccessService {
-  private institutionCache: { at: number; value: InstitutionInfo } | null = null;
+  private institutionCache: { at: number; ver: string; value: InstitutionInfo } | null = null;
 
   constructor(
     private readonly db: Db,
@@ -73,11 +73,12 @@ export class AccessService {
   }
 
   async institution(): Promise<InstitutionInfo> {
-    if (this.institutionCache && Date.now() - this.institutionCache.at < 60_000) return this.institutionCache.value;
+    const ver = await this.version();
+    if (this.institutionCache && this.institutionCache.ver === ver && Date.now() - this.institutionCache.at < 60_000) return this.institutionCache.value;
     const [row] = await this.db.db.select().from(s.institution).limit(1);
     if (!row) throw new Error('Institution not configured — run the seed or setup');
     const value = { id: row.id, name: row.name, brandColor: row.brandColor, settings: row.settings };
-    this.institutionCache = { at: Date.now(), value };
+    this.institutionCache = { at: Date.now(), ver, value };
     return value;
   }
 
@@ -86,7 +87,8 @@ export class AccessService {
   }
 
   async activeBranches(): Promise<{ id: string; code: string; name: string }[]> {
-    return this.redis.cached('branches:active', 60, () =>
+    const ver = await this.version();
+    return this.redis.cached(`branches:active:${ver}`, 60, () =>
       this.db.db.select({ id: s.branch.id, code: s.branch.code, name: s.branch.name }).from(s.branch).where(inArray(s.branch.status, ['active', 'paused'])).orderBy(asc(s.branch.openedOn)),
     );
   }

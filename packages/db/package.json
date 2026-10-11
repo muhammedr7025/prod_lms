@@ -17,7 +17,8 @@
     "@exatech/domain": "workspace:*",
     "drizzle-orm": "0.44.7",
     "postgres": "3.4.9",
-    "uuidv7": "1.2.1"
+    "uuidv7": "1.2.1",
+    "ioredis": "5.11.1"
   },
   "devDependencies": {
     "drizzle-kit": "0.31.11",

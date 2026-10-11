@@ -38,6 +38,8 @@ const schema = z.object({
   RAZORPAY_WEBHOOK_SECRET: z.string().optional(),
   /** Used by the built-in sandbox gateway when Razorpay is not configured. */
   SANDBOX_WEBHOOK_SECRET: z.string().default('sandbox-webhook-secret'),
+  /** Optional: enables "Draft with AI" for announcements (never auto-sends). */
+  ANTHROPIC_API_KEY: z.string().optional(),
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
 });
 
