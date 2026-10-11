@@ -18,10 +18,10 @@ function safeNext(next: string): string {
   return next.startsWith('/') && !next.startsWith('//') ? next : '/';
 }
 
-export function SignInForm({ next, reason, googleEnabled, demoMode, apiDown }: { next: string; reason: string | null; googleEnabled: boolean; demoMode: boolean; apiDown: boolean }) {
+export function SignInForm({ next, reason, email = '', googleEnabled, demoMode, apiDown }: { next: string; reason: string | null; email?: string; googleEnabled: boolean; demoMode: boolean; apiDown: boolean }) {
   const [mode, setMode] = useState<Mode>('email');
   const [step, setStep] = useState<Step>('enter');
-  const [value, setValue] = useState('');
+  const [value, setValue] = useState(email);
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);

@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 
 const API_URL = process.env.API_URL ?? 'http://localhost:4300';
 
-export default async function SignInPage({ searchParams }: { searchParams: Promise<{ next?: string; reason?: string; error?: string }> }) {
+export default async function SignInPage({ searchParams }: { searchParams: Promise<{ next?: string; reason?: string; error?: string; email?: string }> }) {
   const sp = await searchParams;
   const config = await callApi(publicContract.config, {}, { baseUrl: API_URL }).catch(() => null);
   const branches = config?.branches ?? [];
@@ -39,7 +39,7 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
         </div>
       </div>
       <div className="p-6 sm:p-10 grid place-items-center">
-        <SignInForm next={sp.next ?? '/'} reason={sp.reason ?? null} googleEnabled={!!config?.googleEnabled} demoMode={!!config?.demoMode} apiDown={!config} />
+        <SignInForm next={sp.next ?? '/'} reason={sp.reason ?? null} email={sp.email ?? ''} googleEnabled={!!config?.googleEnabled} demoMode={!!config?.demoMode} apiDown={!config} />
       </div>
     </div>
   );

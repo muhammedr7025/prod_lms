@@ -84,6 +84,14 @@ export class AuthGuard implements CanActivate {
       }
     }
 
+    // Portal sessions (students, parents): rolling N days since last activity.
+    if (user.kind !== 'staff' && !session.impersonatedBy && session.lastSeenAt) {
+      if (now - new Date(session.lastSeenAt).getTime() > security.portalSessionDays * 86_400_000) {
+        await this.db.db.delete(s.session).where(eq(s.session.id, session.id));
+        throw new DomainError('SESSION_EXPIRED', 'Your session has expired', 401);
+      }
+    }
+
     const memberships = await this.access.memberships(user.id);
     if (memberships.length === 0) throw forbidden('Your account has no active role. Ask an administrator to add one.');
     const m = memberships.find((x) => x.id === session.activeMembershipId) ?? memberships[0]!;

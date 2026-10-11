@@ -75,7 +75,8 @@ export function createAuth(deps: AuthDeps) {
             if (!target) throw new APIError('NOT_FOUND', { message: 'User not found' });
             const kind = (target as unknown as { kind: string }).kind;
             if (kind === 'staff') throw new APIError('FORBIDDEN', { message: 'Only student and parent accounts can be viewed' });
-            const minutes = 15;
+            const [inst] = await db.db.select({ settings: s.institution.settings }).from(s.institution).limit(1);
+            const minutes = inst?.settings.security.impersonationMinutes ?? 15;
             const session = await ctx.context.internalAdapter.createSession(
               target.id,
               ctx,
@@ -148,7 +149,9 @@ export function createAuth(deps: AuthDeps) {
         ipAddress: { ipAddressHeaders: ['x-forwarded-for', 'x-real-ip'] },
       },
       session: {
-        expiresIn: 60 * 60 * 24 * 7,
+        // Outer bound; the API guard applies the configured limits (staff 12 h + idle timeout,
+        // portal N days rolling since last activity) from institution settings.
+        expiresIn: 60 * 60 * 24 * 30,
         updateAge: 60 * 60 * 24,
         additionalFields: {
           activeMembershipId: { type: 'string', required: false, input: false },

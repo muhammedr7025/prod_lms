@@ -717,11 +717,13 @@ export class StaffService {
         userIds: [userId],
         category: 'message',
         title: 'Your access changed',
-        body: `${c.userName} updated your memberships: ${afterLabels.join(' · ')}. Switch role from the account menu.`,
+        body: `${c.userName} updated your memberships: ${afterLabels.join(' · ')}. Sign in again to use them.`,
         link: '/',
         entityType: 'user',
         entityId: userId,
       });
+      // PRD §9.1: all sessions are revoked on role change (never the actor's own current session).
+      if (userId !== c.userId) await tx.delete(s.session).where(eq(s.session.userId, userId));
       this.notify.invalidateUsers(tx, [userId], [['me']]);
       this.notify.invalidate(tx, null, [['institution']]);
     });

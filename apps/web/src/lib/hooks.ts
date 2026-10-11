@@ -47,10 +47,11 @@ export function useApiMutation<D extends RouteDef>(def: D, opts: MutationOptions
   return useMutation<ApiResult<D>, ApiError, ApiArgs<D>>({
     mutationFn: (args) => callApi(def, args),
     onSuccess: async (data, args) => {
-      const prefixes = typeof opts.invalidate === 'function' ? opts.invalidate(data, args) : opts.invalidate;
-      if (prefixes?.length) await invalidatePrefixes(qc, prefixes);
+      // Feedback first (instant), then refetch what changed.
       const msg = typeof opts.success === 'function' ? opts.success(data, args) : opts.success;
       if (msg) toast(msg);
+      const prefixes = typeof opts.invalidate === 'function' ? opts.invalidate(data, args) : opts.invalidate;
+      if (prefixes?.length) await invalidatePrefixes(qc, prefixes);
       opts.onSuccess?.(data, args);
     },
     onError: (error, args) => {
