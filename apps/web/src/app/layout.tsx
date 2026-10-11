@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Barlow, Barlow_Condensed } from 'next/font/google';
+import { headers } from 'next/headers';
 import { Providers } from '@/components/providers';
 import './globals.css';
 
@@ -21,7 +22,9 @@ export const viewport: Viewport = {
   themeColor: '#4f9d68',
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // Reading the request headers renders every page per request, so Next can stamp the CSP nonce on its scripts.
+  await headers();
   return (
     <html lang="en" className={`${barlow.variable} ${barlowCondensed.variable}`}>
       <body>

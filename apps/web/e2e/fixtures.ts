@@ -1,4 +1,32 @@
 import { expect, test as base, type Page } from '@playwright/test';
+import { execFileSync } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const ROOT = path.resolve(__dirname, '../../..');
+
+function apiEnv(): Record<string, string> {
+  const out: Record<string, string> = {};
+  const file = path.join(ROOT, 'apps/api/.env');
+  if (fs.existsSync(file)) {
+    for (const line of fs.readFileSync(file, 'utf8').split('\n')) {
+      const m = /^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/.exec(line);
+      if (m && !line.trim().startsWith('#')) out[m[1]!] = m[2]!;
+    }
+  }
+  return out;
+}
+
+/**
+ * Reset the demo data (and the seeded material files) so a spec starts from
+ * the known seed. Call in `test.beforeAll` of specs that mutate data.
+ * Uses the same DATABASE_URL / REDIS_PREFIX / S3_BUCKET as the running API.
+ */
+export function reseed(): void {
+  const env = { ...apiEnv(), ...process.env } as NodeJS.ProcessEnv;
+  execFileSync('node', [path.join(ROOT, 'packages/db/dist/seed/index.js')], { env, stdio: 'pipe', timeout: 120_000 });
+  execFileSync('node', [path.join(ROOT, 'apps/api/dist/scripts/seed-files.js')], { env, stdio: 'pipe', timeout: 120_000, cwd: path.join(ROOT, 'apps/api') });
+}
 
 /** Seeded personas (DEMO_MODE). */
 export const PERSONAS = {
