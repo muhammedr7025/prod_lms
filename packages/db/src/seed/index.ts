@@ -721,7 +721,8 @@ export async function seed(url = process.env.DATABASE_URL, anchorArg?: string) {
     /* ── sessions & attendance ── */
     const sessionsByBatch: Record<string, { id: string; date: string; start: string }[]> = {};
     const sessionRows: (typeof s.classSession.$inferInsert)[] = [];
-    const leaveNithin = addDays(anchor, 6);
+    // Same weekday next week = a DM-A "today" slot, so the leave flags a real session needing a substitute.
+    const leaveNithin = addDays(anchor, 7);
     for (const b of batches) {
       sessionsByBatch[b.id] = [];
       const from = b.start > addDays(anchor, -42) ? b.start : addDays(anchor, -42);
