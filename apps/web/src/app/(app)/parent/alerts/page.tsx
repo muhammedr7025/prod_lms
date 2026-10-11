@@ -1,5 +1,13 @@
-import { ScreenPlaceholder } from '@/components/screen-placeholder';
+import { portalContract } from '@exatech/contracts';
+import { ParentAlerts } from '@/features/portal';
+import { Prefetch, q } from '@/lib/prefetch';
+
+export const metadata = { title: 'Alerts' };
 
 export default function Page() {
-  return <ScreenPlaceholder screen="palerts" />;
+  return (
+    <Prefetch queries={[q(portalContract.children, {}), q(portalContract.alerts, {})]}>
+      <ParentAlerts />
+    </Prefetch>
+  );
 }
