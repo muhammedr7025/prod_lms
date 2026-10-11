@@ -2,7 +2,9 @@ import { Controller } from '@nestjs/common';
 import { referenceContract, type Reference } from '@exatech/contracts';
 import * as s from '@exatech/db';
 import { and, asc, eq, inArray, sql } from '@exatech/db';
+import { ctx } from './context';
 import { Db } from './db';
+import { forbidden } from './errors';
 import { Endpoint } from './http';
 
 /** Reference data used by pickers and dialogs everywhere (cached client-side for 30 min). */
@@ -12,6 +14,8 @@ export class ReferenceController {
 
   @Endpoint(referenceContract.get)
   async get(): Promise<Reference> {
+    // Staff directory and catalogue data are for staff (incl. teachers) only — least privilege for portals.
+    if (ctx().userKind !== 'staff') throw forbidden();
     const db = this.db.db;
     const [branches, courses, subjects, rooms, batches, teachers, staff, feePlans] = await Promise.all([
       db.select({ id: s.branch.id, code: s.branch.code, name: s.branch.name, status: s.branch.status }).from(s.branch).orderBy(asc(s.branch.openedOn)),
