@@ -1,5 +1,7 @@
-import { ScreenPlaceholder } from '@/components/screen-placeholder';
+import { InvoicesScreen } from '@/features/finance';
+
+export const metadata = { title: 'Invoices & receipts' };
 
 export default function Page() {
-  return <ScreenPlaceholder screen="invoices" />;
+  return <InvoicesScreen />;
 }

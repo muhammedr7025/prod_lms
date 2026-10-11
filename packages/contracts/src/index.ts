@@ -11,3 +11,4 @@ export * from './modules/academics';
 export * from './modules/comms';
 export * from './modules/sales';
 export * from './modules/teaching';
+export * from './modules/finance';
