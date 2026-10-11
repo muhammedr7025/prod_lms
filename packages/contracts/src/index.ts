@@ -4,3 +4,5 @@ export * from './screens';
 export * from './events';
 export * from './modules/core';
 export * from './modules/payments';
+export * from './modules/admissions';
+export * from './modules/checkin';
