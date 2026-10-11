@@ -7,3 +7,5 @@ export * from './modules/payments';
 export * from './modules/admissions';
 export * from './modules/checkin';
 export * from './modules/approvals';
+export * from './modules/academics';
+export * from './modules/comms';
