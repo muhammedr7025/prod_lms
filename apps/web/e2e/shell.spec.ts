@@ -1,4 +1,8 @@
 import { expect, loginAs, test } from './fixtures';
+import { reseed } from './fixtures';
+
+// Every spec starts from the known demo seed (specs mutate shared data).
+test.beforeAll(() => reseed());
 
 test.describe('shell & identity', () => {
   test('signed-out users are sent to sign-in', async ({ page }) => {

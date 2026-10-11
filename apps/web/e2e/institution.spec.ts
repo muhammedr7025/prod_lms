@@ -1,6 +1,10 @@
 import { execFileSync } from 'node:child_process';
 import type { Browser, BrowserContext, Page } from '@playwright/test';
 import { expect, loginAs, test } from './fixtures';
+import { reseed } from './fixtures';
+
+// Every spec starts from the known demo seed (specs mutate shared data).
+test.beforeAll(() => reseed());
 
 /**
  * Institution (Super Admin): overview KPIs & approvals, branches (drawer, Work
@@ -212,7 +216,7 @@ test.describe('institution · super admin', () => {
     expect(t.errors).toEqual([]);
   });
 
-  test('edit memberships: add a Sales membership', async ({ page }) => {
+  test('edit memberships: add a Sales membership (their sessions are revoked — PRD §9.1)', async ({ page, browser }) => {
     await loginAs(page, 'superadmin');
     await openPerson(page, invited.name);
     await page.getByRole('button', { name: 'Edit memberships' }).click();
@@ -225,6 +229,12 @@ test.describe('institution · super admin', () => {
     await expect(page.getByTestId('membership-tags')).toContainText('Sales TVM');
     await expect(page.getByTestId('membership-tags')).toContainText('Teacher TVM');
     expect(sql(`select count(*) from membership where user_id = '${invited.userId}' and status = 'active'`)).toBe('2');
+    // A role change signs the person out everywhere; they sign in again to pick up the new access.
+    expect((await teacherCtx!.request.get('/api/me')).status()).toBe(401);
+    await teacherCtx!.close();
+    const t = await signedIn(browser, invited.email);
+    teacherCtx = t.ctx;
+    expect((await teacherCtx.request.get('/api/me')).status()).toBe(200);
   });
 
   test('assign to batch: one subject per batch', async ({ page }) => {

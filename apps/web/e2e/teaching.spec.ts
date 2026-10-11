@@ -1,6 +1,10 @@
 import { execFileSync } from 'node:child_process';
 import type { APIRequestContext } from '@playwright/test';
 import { expect, loginAs, PERSONAS, test, type Persona } from './fixtures';
+import { reseed } from './fixtures';
+
+// Every spec starts from the known demo seed (specs mutate shared data).
+test.beforeAll(() => reseed());
 
 /**
  * Teaching (teacher's mobile app). Mutates data — reseed before a run:

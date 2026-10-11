@@ -1,5 +1,9 @@
 import { execFileSync } from 'node:child_process';
 import { expect, loginAs, test } from './fixtures';
+import { reseed } from './fixtures';
+
+// Every spec starts from the known demo seed (specs mutate shared data).
+test.beforeAll(() => reseed());
 
 /**
  * Academics + Communications (Branch Administrator). Mutates data — reseed

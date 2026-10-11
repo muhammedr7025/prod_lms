@@ -1,6 +1,10 @@
 import crypto from 'node:crypto';
 import type { Page } from '@playwright/test';
 import { expect, loginAs, test } from './fixtures';
+import { reseed } from './fixtures';
+
+// Every spec starts from the known demo seed (specs mutate shared data).
+test.beforeAll(() => reseed());
 
 /**
  * Finance journeys. Run against a freshly seeded stack
