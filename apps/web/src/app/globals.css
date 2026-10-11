@@ -1,0 +1,98 @@
+@import 'tailwindcss';
+@import '../../../../packages/ui/src/styles.css';
+@source '../../../../packages/ui/src';
+
+/* Design tokens — Industry design system, prototype green theme. */
+@theme {
+  --font-heading: var(--font-barlow-condensed), 'Barlow Condensed', system-ui, sans-serif;
+  --font-body: var(--font-barlow), 'Barlow', system-ui, sans-serif;
+  --font-sans: var(--font-barlow), 'Barlow', system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --color-bg: #ffffff;
+  --color-surface: #f4faf5;
+  --color-ink: #1b2420;
+  --color-divider: color-mix(in srgb, #1b2420 14%, transparent);
+
+  --color-accent: #4f9d68;
+  --color-accent-100: #eef8f0;
+  --color-accent-200: #d8efde;
+  --color-accent-300: #b6e0c1;
+  --color-accent-400: #8ecb9f;
+  --color-accent-500: #63ad7a;
+  --color-accent-600: #468c5c;
+  --color-accent-700: #336e47;
+  --color-accent-800: #234e32;
+  --color-accent-900: #17341f;
+
+  --color-neutral-100: #f5f5f8;
+  --color-neutral-200: #e7e7ea;
+  --color-neutral-300: #d4d4d7;
+  --color-neutral-400: #b7b7ba;
+  --color-neutral-500: #98989b;
+  --color-neutral-600: #7a7a7d;
+  --color-neutral-700: #5d5d60;
+  --color-neutral-800: #424244;
+  --color-neutral-900: #2b2b2d;
+
+  --shadow-sm: 0 1px 2px color-mix(in srgb, #2b2b2d 14%, transparent);
+  --shadow-md: 0 3px 10px color-mix(in srgb, #2b2b2d 16%, transparent);
+  --shadow-lg: 0 12px 32px color-mix(in srgb, #2b2b2d 22%, transparent);
+
+  --radius-none: 0;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    margin: 0;
+    background: #fff;
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    line-height: 1.12;
+    letter-spacing: -0.015em;
+    margin: 0;
+  }
+  a {
+    color: var(--color-accent-700);
+    text-underline-offset: 3px;
+  }
+  a:hover {
+    color: var(--color-accent-900);
+  }
+  button {
+    font-family: inherit;
+  }
+  :focus {
+    outline: none;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: color-mix(in srgb, var(--color-accent) 30%, transparent);
+  }
+  input[type='number']::-webkit-inner-spin-button {
+    opacity: 0.4;
+  }
+}
+
+/* Print: documents opened from the app print without the shell. */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+  }
+}

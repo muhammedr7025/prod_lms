@@ -1,0 +1,26 @@
+{
+  "name": "@exatech/db",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc -p tsconfig.build.json --watch --preserveWatchOutput",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "generate": "drizzle-kit generate",
+    "migrate": "node dist/migrate.js",
+    "seed": "node dist/seed/index.js",
+    "reset": "node dist/reset.js && node dist/migrate.js && node dist/seed/index.js"
+  },
+  "dependencies": {
+    "@exatech/domain": "workspace:*",
+    "drizzle-orm": "0.44.7",
+    "postgres": "3.4.9",
+    "uuidv7": "1.2.1"
+  },
+  "devDependencies": {
+    "drizzle-kit": "0.31.11",
+    "typescript": "5.9.3"
+  }
+}

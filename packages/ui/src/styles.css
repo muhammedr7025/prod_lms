@@ -1,0 +1,70 @@
+/*
+ * Exatech UI — Industry design system ("blueprint" wireframe objects) in the
+ * prototype's green theme. Tokens live in the app's @theme; this file adds the
+ * pieces Tailwind utilities cannot express (registration-mark corners).
+ */
+
+.corner {
+  position: absolute;
+  width: 11px;
+  height: 11px;
+  color: color-mix(in srgb, var(--color-ink) 55%, transparent);
+  pointer-events: none;
+}
+.corner::before,
+.corner::after {
+  content: '';
+  position: absolute;
+  background: currentColor;
+}
+.corner::before {
+  left: 5px;
+  top: 0;
+  width: 1px;
+  height: 100%;
+}
+.corner::after {
+  top: 5px;
+  left: 0;
+  width: 100%;
+  height: 1px;
+}
+.corner.tl { top: -6px; left: -6px; }
+.corner.tr { top: -6px; right: -6px; }
+.corner.bl { bottom: -6px; left: -6px; }
+.corner.br { bottom: -6px; right: -6px; }
+
+@keyframes exa-rise {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes exa-slide-in {
+  from { transform: translateX(24px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+@keyframes exa-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes exa-wiggle {
+  0%, 100% { transform: rotate(0); }
+  25% { transform: rotate(-8deg); }
+  75% { transform: rotate(8deg); }
+}
+@keyframes exa-spin { to { transform: rotate(360deg); } }
+@keyframes exa-pulse { 0%,100% { opacity: .55 } 50% { opacity: 1 } }
+
+.animate-rise { animation: exa-rise 0.2s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.animate-slide-in { animation: exa-slide-in 0.22s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.animate-fade { animation: exa-fade 0.15s ease; }
+.animate-wiggle { animation: exa-wiggle 0.25s ease; }
+.animate-spin-exa { animation: exa-spin 0.8s linear infinite; }
+.animate-pulse-exa { animation: exa-pulse 1.4s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-rise, .animate-slide-in, .animate-fade, .animate-wiggle { animation: none; }
+}
+
+.tabular { font-variant-numeric: tabular-nums; }
+
+/* Barcode stripe used for admission-number previews. */
+.barcode-stripe {
+  background: repeating-linear-gradient(90deg, var(--color-ink) 0 2px, transparent 2px 4px, var(--color-ink) 4px 5px, transparent 5px 8px, var(--color-ink) 8px 11px, transparent 11px 13px);
+}

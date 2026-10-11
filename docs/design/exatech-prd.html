@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/industry-a9c64642-e4f0-46ce-b2e8-85f7f0286138/styles.css">
+  <script src="_ds/industry-a9c64642-e4f0-46ce-b2e8-85f7f0286138/_ds_bundle.js"></script>
+  <script src="./doc-page.js"></script>
+  <style>
+    :root{--color-bg:#ffffff;--color-surface:#f4faf5;--color-text:#1b2420;--color-accent:#4f9d68;--color-accent-2:#6aae80;--color-divider:color-mix(in srgb,#1b2420 14%,transparent);--color-accent-100:#eef8f0;--color-accent-200:#d8efde;--color-accent-300:#b6e0c1;--color-accent-700:#336e47;--color-accent-800:#234e32;--color-accent-900:#17341f}
+    body{margin:0}
+    doc-page:not(:defined){visibility:hidden}
+    doc-page{font-family:var(--font-body);color:var(--color-text);font-size:14.5px;line-height:1.6}
+    doc-page h1,doc-page h2,doc-page h3{font-family:var(--font-heading);font-weight:600;margin:0}
+    doc-page h1{font-size:40px;line-height:1.05}
+    doc-page h2{font-size:26px;margin-top:34px;padding-top:14px;border-top:2px solid var(--color-text)}
+    doc-page h3{font-size:18px;margin-top:22px;color:var(--color-accent-900)}
+    doc-page p{margin:8px 0;text-wrap:pretty}
+    doc-page ul,doc-page ol{margin:6px 0 10px;padding-left:22px}
+    doc-page li{margin:3px 0}
+    doc-page table{width:100%;border-collapse:collapse;font-size:13px;margin:10px 0 14px}
+    doc-page th{text-align:left;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-accent-800);padding:7px 8px;border-bottom:1px solid var(--color-text);background:var(--color-accent-100)}
+    doc-page td{padding:7px 8px;border-bottom:1px solid var(--color-divider);vertical-align:top}
+    doc-page tr{break-inside:avoid}
+    doc-page .k{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent-700)}
+    doc-page .box{border:1px solid var(--color-divider);padding:12px 14px;margin:12px 0;break-inside:avoid;position:relative;background:#fff}
+    doc-page .box.g{background:var(--color-accent-100)}
+    doc-page .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0}
+    doc-page .tile{border:1px solid var(--color-divider);padding:10px 12px;break-inside:avoid}
+    doc-page .tile b{display:block;font-family:var(--font-heading);font-weight:600;font-size:26px;line-height:1.05}
+    doc-page .tile span{font-size:12px;color:var(--color-neutral-700)}
+    doc-page .story{margin:0 0 8px;padding-left:12px;border-left:2px solid var(--color-accent-300);font-size:13.5px;orphans:3;widows:3}
+    doc-page .tag{display:inline-block;font-size:10px;padding:1px 6px;border:1px solid var(--color-divider);margin-right:4px;vertical-align:middle;text-transform:uppercase;letter-spacing:.06em}
+    doc-page .tag.a{background:var(--color-accent);color:#fff;border-color:var(--color-accent)}
+    doc-page .tag.b{background:var(--color-accent-200);border-color:var(--color-accent-300)}
+    doc-page .corner{position:absolute;width:11px;height:11px;color:color-mix(in srgb,#1b2420 55%,transparent)}
+    doc-page .corner::before,doc-page .corner::after{content:"";position:absolute;background:currentColor}
+    doc-page .corner::before{left:5px;top:0;width:1px;height:100%}doc-page .corner::after{top:5px;left:0;width:100%;height:1px}
+    doc-page .corner.tl{top:-6px;left:-6px}doc-page .corner.tr{top:-6px;right:-6px}doc-page .corner.bl{bottom:-6px;left:-6px}doc-page .corner.br{bottom:-6px;right:-6px}
+    doc-page .toc{columns:2;column-gap:28px;font-size:13.5px}
+    doc-page code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;background:var(--color-accent-100);padding:1px 4px}
+    doc-page .toc div{break-inside:avoid;padding:3px 0;border-bottom:1px dotted var(--color-divider);display:flex;justify-content:space-between;gap:8px}
+    a{color:var(--color-accent-800)} a:hover{color:var(--color-accent-900)}
+  </style>
+</helmet>
+
+<doc-page margin="0.8in">
+  <div slot="header" style="display:flex;justify-content:space-between;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent-700);padding:0 0 6px;border-bottom:1px solid var(--color-divider);font-family:var(--font-body)"><span>Exatech · Institution Management Platform</span><span>Product Requirements · v1.0 · 11 Oct 2026</span></div>
+  <div slot="footer" style="display:flex;justify-content:space-between;font-size:10px;color:var(--color-neutral-600);padding:6px 0 0;border-top:1px solid var(--color-divider);font-family:var(--font-body)"><span>Confidential · Exatech, Trivandrum · Kochi · Calicut</span><span>Prepared from the interactive prototype “Exatech Platform”</span></div>
+
+  <div class="k">Product requirements document · v1.0</div>
+  <h1>Exatech Institution Management Platform</h1>
+  <p style="font-size:17px;margin-top:10px;max-width:60ch">One system from enquiry to completion: leads, admissions, fees, timetables, attendance, assignments, marks and fee-gated learning material — for every role, scoped to its branch and batch.</p>
+  <div class="tiles">
+    <div class="tile"><b>8</b><span>roles · one person, many memberships</span></div>
+    <div class="tile"><b>3</b><span>branches · institution-wide roll-up</span></div>
+    <div class="tile"><b>6</b><span>modules, event-connected</span></div>
+    <div class="tile"><b>60+</b><span>screens &amp; flows in the prototype</span></div>
+  </div>
+  <table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody>
+    <tr><td>Owner</td><td>Deepu S Nath · Exatech</td></tr>
+    <tr><td>Status</td><td>Draft for engineering estimation · validated against the clickable prototype</td></tr>
+    <tr><td>Primary market</td><td>Private skill-training institutes in India, 1–10 branches, 500–5,000 active learners</td></tr>
+    <tr><td>Platforms</td><td>Responsive web app (desktop-first for staff, mobile-first PWA for teachers, students and parents)</td></tr>
+    <tr><td>Compliance</td><td>GST invoicing · DPDP consent · 7-year append-only audit · parental consent for under-18s</td></tr>
+  </tbody></table>
+
+  <h2>Contents</h2>
+  <div class="toc">
+    <div><span>1. Problem &amp; goals</span><span>§1</span></div><div><span>2. Users &amp; access model</span><span>§2</span></div><div><span>3. Information architecture</span><span>§3</span></div><div><span>4. Identity &amp; shell</span><span>§4</span></div><div><span>5. Super Admin</span><span>§5</span></div><div><span>6. Branch Administrator</span><span>§6</span></div><div><span>7. Sales &amp; Sales Manager</span><span>§7</span></div><div><span>8. Finance</span><span>§8</span></div><div><span>9. Teacher</span><span>§9</span></div><div><span>10. Student &amp; Parent portals</span><span>§10</span></div><div><span>11. Cross-cutting: notifications, audit, search</span><span>§11</span></div><div><span>12. Business rules</span><span>§12</span></div><div><span>13. Data model &amp; events</span><span>§13</span></div><div><span>14. Non-functional requirements</span><span>§14</span></div><div><span>15. Technical architecture &amp; stack</span><span>§15</span></div><div><span>16. Engineering standards</span><span>§16</span></div><div><span>17. Release plan &amp; metrics</span><span>§17</span></div><div><span>18. Open questions</span><span>§18</span></div>
+  </div>
+
+  <h2>1. Problem &amp; goals</h2>
+  <p>Exatech runs three branches on a mix of spreadsheets, a CRM, a fee register and WhatsApp groups. Admissions are re-keyed three times, fee clearance is checked by hand before notes are shared, teachers mark attendance on paper, and parents hear about absences a week late. Nothing is auditable, and management has no live view across branches.</p>
+  <div class="box g"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><div class="k">Goals</div>
+    <ol>
+      <li><b>Zero re-keying.</b> A lead becomes an admission becomes a student, an enrollment, an invoice schedule and two portal accounts in one approved flow.</li>
+      <li><b>Fees drive access.</b> Fee clearance is computed, cached on the enrollment and recomputed on every payment; it gates learning material instantly.</li>
+      <li><b>Teachers work from a phone.</b> Attendance, marks, assignments and notes in under three taps, including sessions that are not on the timetable.</li>
+      <li><b>Parents hear the same day.</b> Absence, fee-due, exam and marks alerts on WhatsApp with no manual step.</li>
+      <li><b>Everything is explainable.</b> Every money-moving or grade-moving action is logged with actor, role, before/after and reason.</li>
+    </ol>
+  </div>
+  <h3>Non-goals (v1)</h3>
+  <ul><li>Payroll and HR beyond leave and substitutes · LMS authoring (quizzes, SCORM) · Placement management · Hostel/transport · Multi-institution SaaS tenancy (single institution, many branches).</li></ul>
+
+  <h2>2. Users &amp; access model</h2>
+  <p>Access is <b>role × scope</b>. A person can hold several memberships (Sanjay Kumar is Sales Manager for Trivandrum and Teacher for FS-B) and switches role from the account menu. New roles start with no permissions; scope is applied on top of every permission: <i>institution</i>, <i>branch</i>, <i>batch</i>, <i>own</i>, <i>child</i>.</p>
+  <table><thead><tr><th style="width:150px">Role</th><th>Scope</th><th>Primary jobs</th><th>Surface</th></tr></thead><tbody>
+    <tr><td><b>Super Admin</b></td><td>Institution</td><td>Branches, roles, settings, approvals above thresholds, audit, every module in every branch, read-only impersonation</td><td>Desktop</td></tr>
+    <tr><td><b>Branch Administrator</b></td><td>One branch</td><td>Courses &amp; batches, timetable, admissions approval, students, staff &amp; teachers, notes oversight, marks publishing, announcements, leads</td><td>Desktop</td></tr>
+    <tr><td><b>Salesperson</b></td><td>Own leads · branch</td><td>Pipeline, follow-ups, imports, convert lead to admission</td><td>Desktop + mobile</td></tr>
+    <tr><td><b>Sales Manager</b></td><td>Branch team</td><td>Funnel, assignment rules, reassignment, targets &amp; leaderboard</td><td>Desktop</td></tr>
+    <tr><td><b>Finance Manager</b></td><td>One or more branches</td><td>Collection desk, fee verification, invoices &amp; receipts, dues, day book, reconciliation, finance settings</td><td>Desktop</td></tr>
+    <tr><td><b>Teacher</b></td><td>Assigned batches (one subject per batch)</td><td>Attendance (incl. ad-hoc), marks, assignments &amp; grading, notes, leave</td><td>Mobile-first</td></tr>
+    <tr><td><b>Student</b></td><td>Own enrollment</td><td>Timetable, notes (fee-gated), work, marks, fees &amp; online payment</td><td>Mobile-first</td></tr>
+    <tr><td><b>Parent</b></td><td>Linked children</td><td>Attendance, marks, fees &amp; payment, alerts, messaging</td><td>Mobile-first</td></tr>
+  </tbody></table>
+  <h3>Permission matrix (C create · R read · U update · D delete · A approve)</h3>
+  <table><thead><tr><th>Resource</th><th>Super</th><th>Branch</th><th>Sales</th><th>Finance</th><th>Teacher</th><th>Student</th><th>Parent</th></tr></thead><tbody>
+    <tr><td>Branches, roles, settings</td><td>CRUD</td><td>R</td><td>—</td><td>R</td><td>—</td><td>—</td><td>—</td></tr>
+    <tr><td>Courses, batches, timetable</td><td>CRUD</td><td>CRUD</td><td>R</td><td>R</td><td>R assigned</td><td>R own</td><td>R child</td></tr>
+    <tr><td>Leads</td><td>CRUD</td><td>CRUD</td><td>CRU own</td><td>R</td><td>—</td><td>—</td><td>—</td></tr>
+    <tr><td>Admissions</td><td>CRUDA</td><td>CRUA</td><td>CRU</td><td>RA (fee step)</td><td>—</td><td>—</td><td>—</td></tr>
+    <tr><td>Fee plans</td><td>CRUDA</td><td>R</td><td>R</td><td>CRUD</td><td>—</td><td>R own</td><td>R child</td></tr>
+    <tr><td>Invoices, payments</td><td>RA</td><td>R</td><td>R own</td><td>CRUDA</td><td>—</td><td>R own · pay</td><td>R child · pay</td></tr>
+    <tr><td>Attendance</td><td>R override</td><td>RU · acknowledge ad-hoc</td><td>—</td><td>—</td><td>CRU assigned + ad-hoc</td><td>R own</td><td>R child</td></tr>
+    <tr><td>Assignments, notes</td><td>R</td><td>R</td><td>—</td><td>—</td><td>CRUD assigned</td><td>R if cleared · submit</td><td>R titles</td></tr>
+    <tr><td>Exams, marks</td><td>R</td><td>R · publish · return</td><td>—</td><td>—</td><td>CRU · submit · recall</td><td>R published</td><td>R published</td></tr>
+    <tr><td>Announcements</td><td>CRUD</td><td>CRUD branch</td><td>—</td><td>CRUD fee topics</td><td>C own batches</td><td>R</td><td>R</td></tr>
+    <tr><td>Audit log</td><td>R</td><td>R branch</td><td>—</td><td>R finance</td><td>—</td><td>—</td><td>—</td></tr>
+  </tbody></table>
+
+  <h2>3. Information architecture</h2>
+  <p><b>Institution → Branch → Course offering → Batch → Enrollment.</b> Courses are defined once at institution level and offered per branch with a local fee plan; batches carry schedule, room, teacher-per-subject and capacity. A teacher's assignment is <i>(teacher, batch) → subject</i>, so one teacher teaches Search in DM-A and Paid media in DM-B.</p>
+  <table><thead><tr><th>Staff navigation (desktop)</th><th>Portal navigation (mobile)</th></tr></thead><tbody>
+    <tr><td><b>Institution</b> Overview · Branches · Staff &amp; teachers · Roles &amp; permissions · Audit log · Settings<br><b>Academics</b> Branch operations · Courses &amp; batches · Timetable · Admissions · Students · Notes &amp; material · Marks publishing · Announcements<br><b>Sales</b> Funnel · Pipeline · Leads · Follow-ups · Import · Assignment rules · Targets &amp; leaderboard<br><b>Finance</b> Dashboard · Collection desk · Student fee account · Invoices &amp; receipts · Dues &amp; follow-up · Day book &amp; closing · Reconciliation · Settings</td>
+    <td><b>Teacher</b> Today · Attendance · Assignments · Notes · Marks<br><b>Student</b> Home · Timetable · Notes · Work · Marks · Fees<br><b>Parent</b> Home · Attendance · Marks · Fees · Alerts (with child switcher)</td></tr>
+  </tbody></table>
+  <p>Each role sees only its groups; Super Admin sees all four groups and a branch switcher (<i>All branches</i> default). Branch-bound roles have the switcher locked to their membership. Every list, KPI and queue filters by the selected branch.</p>
+
+  <h2>4. Identity &amp; shell</h2>
+  <ul>
+    <li><b>Invite-only sign-in</b> — Google, email magic link or phone OTP. Accounts are created by admission approval (student + parent) or staff invite (role × scope applied). No self-registration.</li>
+    <li><b>Sessions</b> — staff 12 h with 30-min idle timeout; student/parent 7-day rolling. 2FA mandatory for Super Admin and Finance.</li>
+    <li><b>Shell</b> — branch switcher, ⌘K command palette (students, leads, invoices, batches, teachers, branches, actions), live notification bell with count, account menu with membership switch and sign-out, grouped sidebar that collapses behind a menu button under 900 px.</li>
+    <li><b>Detail panels</b> — any student, teacher/staff member, branch or exam opens in a right-side drawer with its complete record and contextual actions (see §5–§9). Deep links everywhere: names in tables, "Open" on at-risk rows, palette results.</li>
+    <li><b>Impersonation</b> — Super Admin "View as student": read-only, time-boxed to 15 minutes, logged with reason.</li>
+  </ul>
+
+  <h2>5. Super Admin</h2>
+  <h3>Overview</h3>
+  <p>Institution KPIs for the selected branch scope — revenue, collected vs target, dues outstanding with ageing note, admissions (with pending-approval count), active students — a per-branch table (click a row for the branch panel), an <b>Awaiting your approval</b> queue and the last hour of audit.</p>
+  <table><thead><tr><th>Approval type</th><th>Trigger</th><th>Effect of Approve</th><th>Effect of Return</th></tr></thead><tbody>
+    <tr><td>Discount &gt; 20 %</td><td>Finance requests on an admission</td><td>Admission unblocks for Branch Admin approval; logged</td><td>Back to requester with note</td></tr>
+    <tr><td>Locked-period entry</td><td>Finance needs to void/correct a receipt in a closed month</td><td>Period reopened for one entry; logged with reason</td><td>Denied; logged</td></tr>
+    <tr><td>Refund</td><td>Drop-out within policy window</td><td>Credit note issued; ledger reversal</td><td>Denied; logged</td></tr>
+  </tbody></table>
+  <h3>Branches</h3>
+  <p>Branch cards (code, opened, rooms, batches, students, manager) and the holiday calendar. The branch panel shows KPIs, address/GSTIN/manager/phone, rooms &amp; capacity, batches (teacher · subject), staff, and <b>Work in this branch</b>, which scopes the whole app to that branch.</p>
+  <h3>Staff &amp; teachers</h3>
+  <p>Directory of people with their memberships (role × scope), home branch, what they teach (batch · subject), timetable-derived load and status (active / leave / cross-branch). Invite staff. The teacher panel: memberships, teaching table (batch, course, subject, sessions per week, room, seats), this week's sessions, leave, materials uploaded, marks pending.</p>
+  <h3>Roles &amp; permissions, Audit log, Settings</h3>
+  <ul>
+    <li>Permission matrix as in §2; new roles start empty; least privilege.</li>
+    <li>Audit log: append-only, 7-year retention, filter by actor/action/role/time, watermarked CSV export. Every write in the product appends a row (see §11).</li>
+    <li>Settings: identity &amp; GSTIN, academic year, brand colour, default fee-clearance policy (current instalment paid / fully paid / percentage), discount thresholds (10 % Finance, 20 % Super Admin), admission-number format with Code 128 + signed QR, security (2FA, session lengths, lead retention 24 months).</li>
+  </ul>
+
+  <h2>6. Branch Administrator</h2>
+  <h3>Branch operations</h3>
+  <p>Sessions today (incl. ad-hoc sessions awaiting acknowledgement), running batches, admissions pending, marks to publish, at-risk students (attendance &lt; 75 %, overdue dues, missed work — each opens the student panel).</p>
+  <h3>Courses &amp; batches</h3>
+  <p>Course offerings per branch (duration, mode, fee-plan default) and batches with schedule, teacher · subject (click to open teacher), room, live seat utilisation (updates on admission approval), fee plan and status (planned / open / running / waitlist). Filters: all / running / open / planned.</p>
+  <h3>Timetable</h3>
+  <ul>
+    <li>Week grid by room / teacher / batch; chips show batch · room · teacher · subject; click a chip to edit.</li>
+    <li><b>Add / edit session dialog</b>: batch (auto-fills teacher and subject from the assignment), teacher, subject (editable), day, 2-hour slot, room, mode. <b>Save is blocked</b> with reasons for: room clash, teacher clash, cross-branch teacher on-site days, approved leave. Remove session supported. Every change notifies the batch and is logged.</li>
+    <li><b>Conflicts panel</b> is live and offers one-click fixes ("Move UX-A to Room 4"). Validations listed: teacher availability across branches (45-min buffer), room capacity ≥ seats, holidays suppress sessions.</li>
+    <li><b>Substitute</b>: when a teacher is on leave the affected session is flagged; assigning a substitute updates the chip, notifies students and both teachers, and re-runs clash checks (picking a busy teacher surfaces a new conflict).</li>
+  </ul>
+  <h3>Admissions</h3>
+  <p>Queue of applications showing batch &amp; seats, salesperson, fee plan, discount, three-step progress (Sales → Finance → Branch Admin), documents. <b>Approve</b> is disabled until Finance has verified fee terms and, above 20 % discount, until Super Admin has approved. On approval the system issues the admission number, creates the enrollment and invoice schedule, invites student and parent, marks the lead Won, increments the batch seat count and sends the welcome WhatsApp with the first invoice.</p>
+  <h3>Students</h3>
+  <p>Searchable list (name, phone, admission number, barcode scan) with batch, guardian, attendance, fee status, enrollment state; PII masked in lists; exports watermarked. Go-live import and ID-card printing. The <b>student panel</b> shows attendance, fee balance and next due, published marks, pending work, profile facts, fee account rows, recent attendance, documents and a timeline; actions: Collect payment (opens the desk pre-loaded), Timetable, <b>Transfer batch</b> (target with seats, effective date, reason, pro-rated adjustment), Print ID card, View as student.</p>
+  <h3>Notes &amp; material (oversight)</h3>
+  <p>All material across batches with module, type, visibility (always / fee-gated / scheduled), uploader and open rate; counts of fee-gated items and students currently locked out (linked to Dues).</p>
+  <h3>Marks publishing</h3>
+  <p>Exams by batch with teacher, submission time, student count, average and status. For submitted exams: <b>Review grid</b> (average, highest, lowest, missing rows, full read-only grid), <b>Publish</b> (students and parents notified immediately) or <b>Return</b> to the teacher with a note. Draft marks are never visible to students or parents.</p>
+  <h3>Announcements</h3>
+  <p>Title, rich message, audience (batch, role, segment such as overdue fees, branch, course), schedule and expiry, pin, acknowledgement required, also-WhatsApp. Published items appear instantly on student and parent home and show read/ack counts.</p>
+
+  <h2>7. Sales &amp; Sales Manager</h2>
+  <h3>Pipeline &amp; leads</h3>
+  <p>Kanban across seven stages (New → Contacted → Counselled → Demo scheduled → Negotiation → Admission in progress → Won) with lead score, source and owner; one-click advance; table view with saved filters and a lead record (consent flags, activity timeline, next follow-up, Call / WhatsApp / Email). <b>New lead</b> form validates name and 10-digit phone, dedupes on phone/email, assigns by rule and starts the first-response timer.</p>
+  <h3>Follow-ups &amp; templates</h3>
+  <p>Overdue and Today queues with log-outcome; Meta-approved WhatsApp templates with variables; personal month stats vs target.</p>
+  <h3>Import</h3>
+  <p>Four steps — upload (CSV/XLSX ≤ 10,000 rows), map &amp; preview, validate &amp; dedupe (merge / skip / create), run as a background job with downloadable error report and round-robin assignment.</p>
+  <h3>Convert to admission</h3>
+  <p>Five steps prefilled from the lead: student details, guardian (parent login via OTP), batch with live seats and waitlist, fee plan &amp; discount request (threshold warnings), documents &amp; DPDP consent. Submitting places the application in the Finance verification queue and moves the lead to <i>Admission in progress</i>.</p>
+  <h3>Sales Manager</h3>
+  <ul><li>Funnel with step-to-step conversion, lost reasons and by-source table; median first response.</li><li>Assignment rules evaluated top-down (source, course, preferred branch, fallback round-robin) and bulk reassignment (e.g. staff on leave).</li><li>Targets &amp; leaderboard: leads, contacted &lt; 2 h, admissions vs target, attributed revenue.</li></ul>
+
+  <h2>8. Finance</h2>
+  <h3>Dashboard</h3>
+  <p>Collected today, expected this week, overdue (students, promises), pending clearance (cheques, online), fee verifications; today by method; dues ageing; collection vs target by branch. The <b>Fee verification queue</b> is step 2 of admission: Finance verifies plan, discount and documents, or returns to Sales.</p>
+  <h3>Collection desk</h3>
+  <ul>
+    <li>Scan the admission barcode or search by name / phone / number; the fee account loads with instalments, paid, balance and the suggested next-due amount.</li>
+    <li>Amount (minimum partial ₹1,000), method (UPI, cash, card, cheque, transfer) with method-specific reference, split tender, UPI QR, keyboard-first (⏎ confirm).</li>
+    <li>Confirm prints the receipt (A4 / A5 / 80 mm), sends WhatsApp + email, allocates oldest-due-first, marks the invoice Paid or Partially paid, recomputes fee clearance and unlocks notes. Cheques stay <i>pending clearance</i> and do not unlock. Excess is held as credit.</li>
+  </ul>
+  <h3>Student fee account</h3>
+  <p>Totals, overdue with late fee, clearance status with temporary exemption (reason required), append-only ledger (reversals, never deletes), instalment schedule with revisions, restructure (approval above ₹10,000), follow-up log, promise-to-pay, reminders and payment link.</p>
+  <h3>Invoices &amp; receipts · Dues · Day book · Reconciliation · Settings</h3>
+  <ul>
+    <li>Gap-free numbering per branch per FY; cancel issues a credit note; reprints watermarked "Duplicate" and logged; bulk generation per batch; verification QR on every document.</li>
+    <li>Dues with ageing buckets, last reminder, promise; one-click reminders (stop automatically on payment); announce to the overdue segment.</li>
+    <li>Day book per counter with denominations, difference and explanation; closing locks the day; period locks need Super Admin to reopen; maker-checker for discounts, waivers, refunds, voids, restructures.</li>
+    <li>Razorpay settlement auto-match by payment id + amount; unmatched → record as advance / investigate; idempotent webhooks retried 72 h.</li>
+    <li>Settings: numbering, GST rate &amp; SAC, grace and late fee with cap, approval thresholds, methods &amp; allocation order, document templates.</li>
+  </ul>
+
+  <h2>9. Teacher</h2>
+  <p>Mobile-first; every action completes in ≤ 3 taps; works offline for attendance and syncs later.</p>
+  <h3>Today</h3>
+  <p>Sessions with live marked counts, the next session's <b>Mark attendance</b> (routes to that batch), ad-hoc session card, "Cover another class", to-grade count across batches, missing-marks count across draft exams, leave list with <b>Request leave</b> (shows which session will need a substitute; pending until the Branch Admin approves).</p>
+  <h3>Attendance</h3>
+  <ul>
+    <li><b>Batch · session</b> picker (own batches) and <b>Subject taught</b> picker (defaults to the assigned subject; any syllabus subject, Doubt-clearing, Revision, Guest lecture). A different subject tags the session, informs the subject teacher and updates the syllabus log.</li>
+    <li><b>Cover another class</b>: any batch in the branch, type (substitute / extra / doubt-clearing / guest), start, mandatory reason → roster loads; the session is flagged ad-hoc in Branch operations and counts after acknowledgement; regular teacher notified.</li>
+    <li>Tap to cycle Present → Absent → Late → Excused; Mark all present; <b>QR self check-in</b> (rotating 5-minute code, Wi-Fi/geo-fenced); <b>Submit</b> stamps time, sends same-day absence alerts to parents, logs the counts; edits allowed 48 h, later changes need admin override with reason.</li>
+  </ul>
+  <h3>Marks</h3>
+  <ul>
+    <li>Exam picker across the teacher's batches (status in label) and <b>New exam</b>: batch, name (duplicate check), date, up to four components with max marks; roster rows created; appears on students' timetable.</li>
+    <li>Grid with per-component inputs; over-max cells highlighted and totals show "!"; partial totals shown with "…"; Fill empty with 0; CSV import by admission number.</li>
+    <li><b>Submit</b> only when every row is complete and valid; <b>Recall</b> while awaiting publish; published exams are read-only (corrections via Branch Admin override with reason).</li>
+  </ul>
+  <h3>Assignments</h3>
+  <p>All / per-batch filter; cards show due, max, submitted/graded progress, late policy. <b>New assignment</b> (title, batch, due, max, late policy, rubric). <b>Grade</b> dialog lists ungraded submissions with on-time/late flag, marks (over-max blocked) and optional feedback; partial saves keep the rest queued; releasing updates the student's Work tab. Remind non-submitters; extend due date (batch notified).</p>
+  <h3>Notes &amp; material</h3>
+  <p>Per-batch view by module; <b>Upload</b> (batch, module, title, type, visibility always / fee-gated / scheduled-with-date); tap a visibility tag to cycle; remove. Files via 5-minute signed URLs, PDFs watermarked with the student's name.</p>
+
+  <h2>10. Student &amp; Parent portals</h2>
+  <h3>Student</h3>
+  <ul>
+    <li><b>Home</b> — fee card (due / Pay now / cleared), attendance ring with next session, pending work, upcoming exam, latest announcement.</li>
+    <li><b>Timetable</b> — week list incl. exams and holidays; ICS export.</li>
+    <li><b>Notes</b> — by module; fee-gated items show <i>Locked · Pay now</i> and open the Razorpay sheet; scheduled items show their date; opening uses a signed link.</li>
+    <li><b>Work</b> — assignments with status (Pending / Submitted · awaiting grade / Graded · X / max), attach &amp; submit, late policy shown.</li>
+    <li><b>Marks</b> — published only, with batch average, grade and trend; report card on completion.</li>
+    <li><b>Fees</b> — instalments with status, Pay now (next due / custom / full), invoices &amp; receipts PDF.</li>
+  </ul>
+  <h3>Parent</h3>
+  <ul>
+    <li>Child switcher; per child: fee card (overdue states in ink), attendance % with threshold warning, latest published mark, today's session status, message class teacher (moderated, staff hours), request PTM slot.</li>
+    <li>Attendance history with same-day statuses; Marks (published only); Fees with pay for one or all children; Alerts feed (absence, fee overdue/due, low attendance, marks published, payments) with channel rules — fee-due and exam schedule cannot be muted.</li>
+  </ul>
+
+  <h2>11. Cross-cutting</h2>
+  <table><thead><tr><th style="width:170px">Capability</th><th>Requirement</th></tr></thead><tbody>
+    <tr><td>Notifications</td><td>Every domain event raises in-app notifications (live bell count) and, per category rules, WhatsApp/email. Categories: payment, admission, marks, attendance, timetable, material, leave, ad-hoc session, announcement, lead. Users choose channels except fee-due and exam schedule.</td></tr>
+    <tr><td>Audit</td><td>Append-only entries with time, actor, active role, action, entity, before → after, IP. Written by: approvals, payments, publishes/returns/recalls, timetable changes, substitutes, lead creation, transfers, day close, announcements, exam/assignment/material creation, visibility changes, attendance submission, ad-hoc sessions, leave, impersonation, exports.</td></tr>
+    <tr><td>Search</td><td>⌘K palette over students, leads, invoices, batches, teachers, branches and actions; results open detail panels or jump to screens respecting scope.</td></tr>
+    <tr><td>Branch scoping</td><td>One branch context drives KPIs, lists, queues and filters; branch-bound roles cannot change it.</td></tr>
+    <tr><td>Documents</td><td>GST invoice, receipt (3 formats), statement of account, ID card (Code 128 + signed QR), report card, certificate — all templated with institution identity injected.</td></tr>
+    <tr><td>Privacy</td><td>DPDP purpose-listed consent at admission; parental consent for minors; PII masked in lists; watermarked exports; lead retention 24 months.</td></tr>
+  </tbody></table>
+
+  <h2>12. Business rules</h2>
+  <ol>
+    <li>Admission approval order: Sales submits → Finance verifies fee terms → (Super Admin approves if discount &gt; 20 %) → Branch Admin approves. Each gate blocks the next.</li>
+    <li>Capacity is enforced at approval; overflow goes to the waitlist; seat hold 48 h after booking payment.</li>
+    <li>Fee clearance policy (default: current instalment paid) is per course, cached on the enrollment and recomputed on payment webhook, void, waiver or exemption. Cheques count only after clearance.</li>
+    <li>Partial payments allowed above ₹1,000; allocation oldest-due-first (or component priority); late fee per day on unpaid balance after grace, capped.</li>
+    <li>Marks are two-step: teacher submits (complete and valid only) → Branch Admin publishes or returns. Drafts are invisible to students and parents.</li>
+    <li>Attendance edits by the teacher within 48 h; afterwards admin override with reason. Ad-hoc sessions count after Branch Admin acknowledgement.</li>
+    <li>Timetable saves are rejected on room or teacher clash, on-site rule violations and approved leave; holidays suppress sessions and pause fee reminders.</li>
+    <li>Reminders stop automatically when a payment posts. Reprints are watermarked and logged. Closed periods are read-only without Super Admin approval.</li>
+    <li>A teacher's subject per batch is the default for sessions and exams but any session may be tagged with another syllabus subject; the subject teacher is informed.</li>
+  </ol>
+
+  <h2>13. Data model &amp; events</h2>
+  <p><b>Core entities:</b> Institution, Branch, Room, Course, CourseOffering, FeePlan, Batch, TeacherAssignment (teacher, batch, subject), Session (timetabled or ad-hoc), Lead, Activity, Application, Enrollment, Student, Guardian, Membership (user, role, scope), Invoice, Payment, Receipt, CreditNote, LedgerEntry, Attendance, Exam, ExamComponent, MarkRow, Assignment, Submission, Grade, Material, Announcement, Leave, Notification, AuditEntry.</p>
+  <table><thead><tr><th>Domain event</th><th>Consumers</th></tr></thead><tbody>
+    <tr><td>LeadCreated · LeadStageChanged</td><td>Assignment rules, first-response timer, manager funnel</td></tr>
+    <tr><td>ApplicationSubmitted · FeeTermsVerified · DiscountApproved</td><td>Admissions queue gates, notifications</td></tr>
+    <tr><td>AdmissionApproved</td><td>Enrollment, invoice schedule, accounts &amp; invites, seat count, lead Won, welcome WhatsApp, ID card</td></tr>
+    <tr><td>PaymentRecorded · PaymentCleared · ReceiptIssued</td><td>Invoice status, ledger, fee-clearance recompute, material unlock, dues &amp; reminders stop, day book, reconciliation</td></tr>
+    <tr><td>SessionCreated/Updated/Removed · SubstituteAssigned</td><td>Conflict engine, teacher load, student timetable, notifications</td></tr>
+    <tr><td>AttendanceSubmitted · AdhocSessionStarted</td><td>Parent absence alerts, at-risk signal, branch session list, acknowledgement queue</td></tr>
+    <tr><td>MarksSubmitted · MarksReturned · MarksPublished</td><td>Publishing queue, student/parent marks, alerts, report card</td></tr>
+    <tr><td>AssignmentCreated · SubmissionReceived · GradesReleased</td><td>Student Work, teacher to-grade counts, notifications</td></tr>
+    <tr><td>MaterialUploaded · MaterialVisibilityChanged</td><td>Student notes, admin oversight, locked-student count</td></tr>
+    <tr><td>AnnouncementPublished · LeaveRequested · BatchTransferred</td><td>Home feeds, approvals, pro-rated fee adjustment</td></tr>
+  </tbody></table>
+
+  <h2>14. Non-functional requirements</h2>
+  <table><thead><tr><th style="width:170px">Area</th><th>Target</th></tr></thead><tbody>
+    <tr><td>Performance</td><td>Lists ≤ 300 ms p95 with keyset pagination; dashboards from materialised views refreshed ≤ 60 s; imports of 10,000 rows ≤ 60 s as background jobs.</td></tr>
+    <tr><td>Availability</td><td>99.9 % monthly; collection desk and attendance degrade gracefully offline (PWA queue, idempotent sync).</td></tr>
+    <tr><td>Security</td><td>Role × scope enforced server-side on every query; 2FA for finance and super admin; signed, expiring file URLs; watermarking; rate-limited OTP.</td></tr>
+    <tr><td>Integrity</td><td>Append-only ledger and audit; gap-free document numbering per branch per FY; idempotent payment webhooks; period locks.</td></tr>
+    <tr><td>Accessibility &amp; UX</td><td>Mobile hit targets ≥ 44 px; keyboard-first desk (⏎, F2, F3); text contrast ≥ 4.5:1; blocking validations always state the reason.</td></tr>
+    <tr><td>Compliance</td><td>GST-compliant invoices; DPDP consent records; 7-year retention for finance and audit; data export per student on request.</td></tr>
+  </tbody></table>
+
+  <h2>15. Technical architecture &amp; stack</h2>
+  <p>Two deployables sharing one type system: a <b>Next.js</b> web app (App Router, server-side rendering) and a <b>NestJS</b> API. Contracts are defined once in <b>Zod</b> schemas inside a shared package and consumed by both sides, so a change to an invoice shape fails the build in the API handler <i>and</i> the React form that renders it.</p>
+  <table><thead><tr><th style="width:170px">Layer</th><th>Choice</th><th>Why / rules</th></tr></thead><tbody>
+    <tr><td>Monorepo</td><td>pnpm workspaces + Turborepo: <code>apps/web</code>, <code>apps/api</code>, <code>packages/contracts</code> (Zod + inferred TS types, OpenAPI), <code>packages/ui</code> (shadcn variants), <code>packages/config</code> (eslint, tsconfig, tailwind preset)</td><td>Single source of truth for types; shared lint/TS config; remote cache for CI.</td></tr>
+    <tr><td>Web framework</td><td>Next.js (App Router) · React Server Components · SSR for every authenticated route · streaming with Suspense</td><td>First paint with real data (KPIs, lists) rendered on the server; client components only where there is interaction. Route groups per role: <code>(staff)</code>, <code>(portal)</code>.</td></tr>
+    <tr><td>Data fetching</td><td>TanStack Query v5 with <code>HydrationBoundary</code>: prefetch on the server, hydrate on the client; query keys namespaced by feature and branch scope</td><td><b>Caching policy:</b> dashboards/materialised views <code>staleTime</code> 60 s; lists 30 s with keyset <code>useInfiniteQuery</code>; reference data (courses, rooms, roles) 24 h; money and marks mutations invalidate by key prefix and use optimistic updates only for non-financial actions (attendance taps, visibility toggles). Server-Sent Events push <code>invalidateQueries</code> for notifications, payments and publishes.</td></tr>
+    <tr><td>Auth</td><td>Better Auth: Google OAuth, email magic link, phone OTP · invite-only (no public sign-up) · sessions in HTTP-only, SameSite cookies · 2FA (TOTP) enforced for Finance and Super Admin · organisation/membership plugin for role × scope</td><td>Session verified in Next.js middleware (edge) and re-verified by the API guard; staff 12 h idle 30 min, portal 7-day rolling; impersonation issues a read-only, time-boxed token that is logged.</td></tr>
+    <tr><td>UI system</td><td>Tailwind CSS + shadcn/ui <b>only</b> — every visual variation is a <code>cva</code> variant inside <code>packages/ui</code> (e.g. <code>Tag variant="ink"</code>, <code>Card variant="blueprint"</code>); no ad-hoc component styling in features</td><td>Design tokens from this document's green/white theme as Tailwind theme values; Barlow / Barlow Condensed via <code>next/font</code>. Radix primitives give keyboard and screen-reader behaviour for free.</td></tr>
+    <tr><td>Micro-interactions</td><td>Framer Motion for drawers, dialogs, list reorders, toast and count-up KPIs; <code>prefers-reduced-motion</code> respected</td><td>Durations 150–250 ms, easing <code>cubic-bezier(.2,.8,.2,1)</code>; optimistic state shown instantly (attendance chip flips before the request resolves).</td></tr>
+    <tr><td>Forms &amp; validation</td><td>React Hook Form + Zod resolvers using the shared schemas; server actions / API both re-validate</td><td>Every blocking rule in §12 (room clash, over-max marks, discount thresholds) is a Zod refinement so the same message appears inline and in the API error.</td></tr>
+    <tr><td>Responsive</td><td>Mobile-first portals (≤ 480 px canvas, bottom nav), desktop-first staff shell with the sidebar collapsing to a sheet under 900 px; container queries for cards and tables</td><td>Tables switch to inner horizontal scroll below their min width; hit targets ≥ 44 px on touch.</td></tr>
+    <tr><td>API framework</td><td>NestJS · modules per bounded context (Identity, Academics, Admissions, Finance, Teaching, Comms, Audit) · CQRS-style command/query handlers · event bus for the domain events in §13</td><td>Controllers are thin; business rules live in domain services; events drive side effects (invoice schedule, invites, notifications) so handlers stay single-purpose.</td></tr>
+    <tr><td>Type safety across the wire</td><td>Zod schemas → <code>nestjs-zod</code> DTOs and OpenAPI → generated typed client used by TanStack Query hooks; <code>ts-rest</code>-style contract per module</td><td>No hand-written <code>fetch</code> in features; a schema change is a compile error in both apps.</td></tr>
+    <tr><td>Persistence</td><td>PostgreSQL + Prisma (or Drizzle) · row-level scoping by <code>branch_id</code> enforced in a repository layer · append-only tables for ledger and audit (insert-only grants) · materialised views for dashboards refreshed by a worker every 60 s</td><td>Gap-free numbering via per-branch, per-FY sequence rows locked in the same transaction as the document.</td></tr>
+    <tr><td>Jobs &amp; realtime</td><td>BullMQ on Redis for imports, reminders, PDF generation, webhook retries (72 h, idempotent by provider id) · SSE endpoint per user for notifications</td><td>Redis also backs rate limits (OTP, login) and short-lived caches (fee-clearance lookups, signed-URL tokens).</td></tr>
+    <tr><td>Files &amp; documents</td><td>S3-compatible object storage; 5-minute signed URLs; server-side PDF (Playwright/Chromium) with watermark layer; thermal 80 mm via ESC/POS template</td><td>Nothing is served directly from the bucket; every download is logged.</td></tr>
+    <tr><td>Integrations</td><td>Razorpay (orders, webhooks, settlements), WhatsApp Business API (approved templates), email (Resend/SES), Google Meet links, Tally export</td><td>Adapters behind interfaces so a provider can be swapped without touching domain code.</td></tr>
+    <tr><td>Security</td><td>Helmet, strict CORS, CSRF for cookie routes, Zod-validated input everywhere, parameterised queries, secrets in a vault, audit of exports and impersonation, dependency scanning</td><td>Role × scope guard runs on every query, never only in the UI.</td></tr>
+    <tr><td>Observability</td><td>OpenTelemetry traces across web → API → DB; structured logs with request id; Sentry for errors; p95 dashboards per endpoint</td><td>Performance budgets: SSR TTFB &lt; 400 ms, API p95 &lt; 300 ms for lists, &lt; 150 ms for fee-clearance checks.</td></tr>
+    <tr><td>Delivery</td><td>CI: type-check, lint, unit + contract tests, Playwright e2e per role, Lighthouse budgets; preview deployments per PR; blue-green production</td><td>Database migrations run before deploy with backward-compatible steps.</td></tr>
+  </tbody></table>
+
+  <h2>16. Engineering standards</h2>
+  <ul>
+    <li><b>Feature-based architecture.</b> <code>apps/web/src/features/&lt;feature&gt;/{components,hooks,api,schemas,index.ts}</code> and <code>apps/api/src/modules/&lt;module&gt;/{controllers,services,repositories,events,dto}</code>. A feature exposes a public <code>index.ts</code>; cross-feature imports go through it only.</li>
+    <li><b>SOLID.</b> Single responsibility per handler/hook; open for extension via variants, adapters and event subscribers rather than flags; interfaces for every external provider (payments, messaging, storage); repositories hide the ORM; thin controllers, fat domain services.</li>
+    <li><b>Scalability.</b> Stateless web and API (horizontal scale), work queued to BullMQ, read models for dashboards, keyset pagination, cache-and-invalidate rather than cache-and-expire for money and marks.</li>
+    <li><b>Performance first.</b> Server components by default; client components opt-in; route-level code splitting; images via <code>next/image</code>; fonts self-hosted; no layout shift (skeletons sized to content); heavy tables virtualised above 200 rows.</li>
+    <li><b>Quality gates.</b> 100 % typed (no <code>any</code>), ESLint strict + import boundaries, unit tests for domain rules (§12), contract tests for every Zod schema, Playwright flows for the admission chain, payment → unlock, and marks publish.</li>
+    <li><b>Accessibility.</b> Radix primitives, focus management in drawers/dialogs, 4.5:1 contrast, keyboard-first collection desk.</li>
+  </ul>
+
+  <h2>17. Release plan &amp; success metrics</h2>
+  <table><thead><tr><th>Phase</th><th>Scope</th><th>Exit metric</th></tr></thead><tbody>
+    <tr><td><b>1 · Go-live core</b></td><td>Identity &amp; shell, branches, roles, students import, batches, timetable with conflicts, admissions chain, finance desk/invoices/dues/day book, student &amp; parent portals (fees, notes, marks read)</td><td>100 % of admissions created without re-keying; receipts issued within 10 s; fee clearance accuracy 100 %</td></tr>
+    <tr><td><b>2 · Teaching</b></td><td>Teacher app (attendance incl. ad-hoc &amp; subject tagging, QR, marks with custom components, assignments &amp; grading, materials, leave), publishing &amp; return, parent alerts, at-risk signal</td><td>≥ 95 % sessions marked same day; absence alert median &lt; 15 min; marks published within 48 h of exam</td></tr>
+    <tr><td><b>3 · Growth</b></td><td>Sales pipeline, import, follow-ups, assignment rules, funnel, leaderboard, announcements with segments, reconciliation, Super Admin approvals &amp; impersonation</td><td>Median first response &lt; 2 h; lead → admission ≥ 15 %; reconciliation unmatched &lt; 1 %</td></tr>
+  </tbody></table>
+
+  <h2>18. Open questions</h2>
+  <ol>
+    <li>Should an ad-hoc session count toward attendance immediately (with later rejection) or only after acknowledgement, as prototyped?</li>
+    <li>Report-card format and grade boundaries per course — institution-wide or per course offering?</li>
+    <li>Do parents need a separate consent for WhatsApp absence alerts, or is admission consent sufficient under DPDP purpose listing?</li>
+    <li>Payroll linkage for substitute sessions and extra classes — out of scope for v1, but should the data be captured now?</li>
+    <li>Multi-currency or scholarships funded by third parties — any near-term need?</li>
+  </ol>
+  <div class="box" style="margin-top:28px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><div class="k">Reference</div><p style="margin:4px 0 0">Every flow in this document is exercised in the interactive prototype <b>Exatech Platform</b> (role picker on the sign-in screen; open any role, switch memberships from the account menu). The prototype is the source of truth for screen inventory and interaction detail.</p></div>
+</doc-page>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  componentDidMount(){ const kick=()=>{const d=document.querySelector('doc-page'); if(d&&d._measure) d._measure(); else window.dispatchEvent(new Event('resize'));}; requestAnimationFrame(kick); setTimeout(kick,300); setTimeout(kick,1500); }
+  renderVals(){ return {}; }
+}
+</script>
+</body>
+</html>
