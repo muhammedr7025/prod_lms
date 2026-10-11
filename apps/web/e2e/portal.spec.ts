@@ -403,7 +403,8 @@ test.describe('parent portal (Suresh · Anjali + Rohan)', () => {
     await msg.getByRole('button', { name: 'Send message' }).click();
     await expect(page.getByText(/^Sent for moderation · Sanjay Kumar replies during staff hours/)).toBeVisible();
     expect(Number(sql(`select count(*) from parent_message where student_id = '${rohanId}' and status = 'pending'`))).toBe(msgsBefore + 1);
-    expect(Number(sql(`select count(*) from notification n join "user" u on u.id = n.user_id where u.email = '${PERSONAS.teacher2}' and n.category = 'message' and n.title = 'Message from Suresh Menon'`))).toBeGreaterThanOrEqual(1);
+    // Moderated: the Branch Admin is asked first; the teacher only hears once it is approved.
+    expect(Number(sql(`select count(*) from notification n join "user" u on u.id = n.user_id where u.email = '${PERSONAS.branchadmin}' and n.category = 'message' and n.title = 'Parent message to moderate · FS-B'`))).toBeGreaterThanOrEqual(1);
 
     // A day that is not a holiday, from tomorrow.
     const day = sql(`select d::date from generate_series((now() at time zone 'Asia/Kolkata')::date + 1, (now() at time zone 'Asia/Kolkata')::date + 20, interval '1 day') d where d::date not in (select date from holiday) order by d limit 1`);
@@ -416,6 +417,47 @@ test.describe('parent portal (Suresh · Anjali + Rohan)', () => {
     await expect(page.getByText(/^Requested .* · Afternoon \(12–4\) · the class teacher confirms the time$/)).toBeVisible();
     expect(sql(`select preferred_slot || '|' || status from ptm_request where student_id = '${rohanId}' order by created_at desc limit 1`)).toBe(`${day} afternoon|requested`);
     expect(Number(sql(`select count(*) from notification n join "user" u on u.id = n.user_id where u.email = '${PERSONAS.branchadmin}' and n.title like 'PTM request · Rohan%'`))).toBe(1);
+  });
+
+  test('staff side: Branch Admin moderates, the class teacher replies and confirms the PTM → parent informed', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await loginAs(page, 'branchadmin');
+    await page.goto('/branch');
+    const inbox = page.getByTestId('parent-requests');
+    const pending = inbox.getByTestId('parent-message').filter({ hasText: 'Could we talk about Rohan’s attendance this month?' }).last();
+    await expect(pending).toContainText('Suresh Menon · parent of Rohan Menon · FS-B → Sanjay Kumar');
+    // Rejecting needs a reason for the parent.
+    await pending.getByRole('button', { name: 'Reject' }).click();
+    await expect(pending.getByRole('button', { name: 'Reject' })).toBeDisabled();
+    await pending.getByRole('button', { name: 'Cancel' }).click();
+    await pending.getByRole('button', { name: 'Approve & deliver' }).click();
+    await expect(page.getByText('Delivered to Sanjay Kumar')).toBeVisible();
+    expect(Number(sql(`select count(*) from parent_message where student_id = '${rohanId}' and status = 'pending'`))).toBe(0);
+    expect(Number(sql(`select count(*) from notification n join "user" u on u.id = n.user_id where u.email = '${PERSONAS.teacher2}' and n.title = 'Message from a parent · Rohan (FS-B)'`))).toBeGreaterThanOrEqual(1);
+
+    // Sanjay switches to his Teacher membership: the delivered messages and the PTM request wait on Today.
+    await page.setViewportSize({ width: 390, height: 844 });
+    await loginAs(page, 'teacher2');
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Account menu' }).click();
+    await page.getByRole('button', { name: /Teacher/ }).click();
+    await expect(page).toHaveURL(/\/teacher/);
+    const today = page.getByTestId('parent-requests');
+    const delivered = today.getByTestId('parent-message').filter({ hasText: 'Could we talk about Rohan’s attendance this month?' }).last();
+    await expect(delivered.getByRole('button', { name: 'Send reply' })).toBeDisabled();
+    await delivered.getByLabel('Reply').fill('Yes — Rohan has missed four sessions. Let us meet at the PTM.');
+    await delivered.getByRole('button', { name: 'Send reply' }).click();
+    await expect(page.getByText('Reply sent to the parent')).toBeVisible();
+    const ptm = today.getByTestId('ptm-request').filter({ hasText: 'Attendance and React sprint' });
+    await expect(ptm).toContainText('Afternoon');
+    await ptm.getByRole('button', { name: 'Confirm slot' }).click();
+    await expect(page.getByText('PTM confirmed · parent informed')).toBeVisible();
+    await expect(ptm).toHaveCount(0);
+
+    expect(sql(`select reply from parent_message where student_id = '${rohanId}' and body like 'Could we talk%' order by created_at desc limit 1`)).toBe('Yes — Rohan has missed four sessions. Let us meet at the PTM.');
+    expect(sql(`select status from ptm_request where student_id = '${rohanId}' and note = 'Attendance and React sprint'`)).toBe('confirmed');
+    expect(Number(sql(`select count(*) from notification n join "user" u on u.id = n.user_id where u.email = '${PERSONAS.parent}' and n.title = 'Reply from Sanjay Kumar'`))).toBe(1);
+    expect(Number(sql(`select count(*) from notification n join "user" u on u.id = n.user_id where u.email = '${PERSONAS.parent}' and n.title like 'PTM confirmed · %'`))).toBe(1);
   });
 
   test('alerts: absence & fee items (ink), channels with unmutable fee due / exam schedule', async ({ page }) => {

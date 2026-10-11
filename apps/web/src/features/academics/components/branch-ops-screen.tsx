@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { useDrawer } from '@/components/drawers/drawer-context';
 import { useCan } from '@/components/me-context';
 import { useApi, useApiMutation } from '@/lib/hooks';
+import { ParentRequestsCard } from '@/features/comms/parent-requests-card';
 
 /** Branch Administrator · Overview — today's sessions, KPIs, at-risk students, leave and ad-hoc acknowledgement. */
 export function BranchOpsScreen() {
@@ -151,6 +152,8 @@ export function BranchOpsScreen() {
           </Card>
         )}
       </Grid>
+
+      <ParentRequestsCard />
 
       <Dialog
         open={!!rejecting}

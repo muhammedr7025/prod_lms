@@ -74,6 +74,7 @@ export class AdmissionsService implements OnModuleInit {
   onModuleInit() {
     this.events.onTx('ApprovalDecided', (tx, p) => this.onApprovalDecided(tx, p), 'admissions:discount-decided');
     this.events.onAsync('AdmissionApproved', 'send-invites', (p) => this.sendInvites(p));
+    this.events.onAsync('BatchTransferred', 'waitlist-seat-offer', (p) => this.offerFreedSeat(p.fromEnrollmentId));
   }
 
   async thresholds(): Promise<DiscountThresholds> {
@@ -157,8 +158,16 @@ export class AdmissionsService implements OnModuleInit {
           blocked = 'Already approved';
           break;
         case 'waitlisted':
-          stepLabel = 'Waitlisted';
-          blocked = `Waitlisted for ${batchCode}`;
+          if (needsSuperAdmin && !superAdminApproved) {
+            stepLabel = 'Waitlisted · awaiting Super Admin';
+            blocked = `Discount above ${t.superAdminPct}% needs Super Admin approval`;
+          } else if (seatsLeft > 0) {
+            stepLabel = 'Seat available · ready for approval';
+            blocked = null;
+          } else {
+            stepLabel = 'Waitlisted';
+            blocked = `Waitlisted for ${batchCode} — approve when a seat frees up`;
+          }
           break;
         default:
           stepLabel = 'Cancelled';
@@ -539,7 +548,7 @@ export class AdmissionsService implements OnModuleInit {
     await this.db.tx(async (tx) => {
       const a = await this.lock(tx, id);
       const withFinance = a.status === 'returned' && a.returnedTo === 'finance';
-      if (!['submitted', 'fee_verified'].includes(a.status) && !withFinance) throw invalid(`This application is ${a.status.replace('_', ' ')} — nothing to return`);
+      if (!['submitted', 'fee_verified', 'waitlisted'].includes(a.status) && !withFinance) throw invalid(`This application is ${a.status.replace('_', ' ')} — nothing to return`);
       if (to === 'finance' && a.status === 'submitted') throw invalid('Finance has not verified this application yet — return it to Sales instead');
       if (to === 'finance' && withFinance) throw invalid('Already with Finance');
       const step = c.roleKey === 'finance' ? 'finance' : c.roleKey === 'superadmin' ? 'super_admin' : 'branch_admin';
@@ -646,7 +655,7 @@ export class AdmissionsService implements OnModuleInit {
     await this.db.tx(async (tx) => {
       const a = await this.lock(tx, id);
       if (a.status === 'approved') throw conflict(`Already approved · ${a.admissionNo ?? ''}`);
-      if (a.status !== 'fee_verified' || !a.financeVerifiedAt) throw invalid('Finance has not verified the fee terms yet');
+      if ((a.status !== 'fee_verified' && a.status !== 'waitlisted') || !a.financeVerifiedAt) throw invalid('Finance has not verified the fee terms yet');
       const needsSA = a.needsSuperAdmin || discountApprovalLevel(a.discountPct, t) === 'super_admin';
       if (needsSA && !a.superAdminApprovedAt) throw invalid(`Discount above ${t.superAdminPct}% needs Super Admin approval`);
 
@@ -820,6 +829,61 @@ export class AdmissionsService implements OnModuleInit {
       });
       this.notify.invalidate(tx, a.branchId, [['admissions'], ['sales'], ['students'], ['batches'], ['finance'], ['reference']]);
       afterCommit(tx, () => this.access.bump());
+    });
+  }
+
+  /* ───────────────────────── Waitlist ───────────────────────── */
+
+  async waitlist(id: string): Promise<void> {
+    const c = ctx();
+    await this.db.tx(async (tx) => {
+      const a = await this.lock(tx, id);
+      if (a.status !== 'fee_verified') throw invalid('Only applications with verified fee terms can join the waitlist');
+      const [batch] = await tx.select().from(s.batch).where(eq(s.batch.id, a.batchId)).for('update');
+      if (!batch) throw notFound('Batch');
+      const [{ n } = { n: 0 }] = await tx
+        .select({ n: sql<number>`count(*)::int` })
+        .from(s.enrollment)
+        .where(and(eq(s.enrollment.batchId, batch.id), eq(s.enrollment.status, 'active')));
+      if (Number(n) < batch.capacity) throw invalid(`${batch.code} still has ${batch.capacity - Number(n)} seat(s) — approve instead`);
+      await tx.update(s.admission).set({ status: 'waitlisted', waitlist: true }).where(eq(s.admission.id, a.id));
+      await tx.insert(s.admissionEvent).values({ admissionId: a.id, step: 'branch_admin', action: 'waitlisted', actorUserId: c.userId, note: `${batch.code} full` });
+      await this.audit.log(tx, { action: 'Admission waitlisted', kind: 'update', entityType: 'admission', entityId: a.id, entityLabel: a.studentName, before: { status: a.status }, after: { status: 'waitlisted' }, summary: `${batch.code} full · waitlisted`, branchId: a.branchId });
+      await this.notify.notify(tx, {
+        userIds: [a.salesUserId],
+        category: 'admission',
+        title: `${a.studentName} is on the ${batch.code} waitlist`,
+        body: 'The batch is full. You will be told when a seat frees up — or offer another batch.',
+        link: '/sales/admission',
+        entityType: 'admission',
+        entityId: a.id,
+      });
+      this.notify.invalidate(tx, a.branchId, [['admissions'], ['sales']]);
+    });
+  }
+
+  /** A seat freed in a batch (transfer out): tell the salesperson and Branch Admins who is next on its waitlist. */
+  private async offerFreedSeat(fromEnrollmentId: string): Promise<void> {
+    const db = this.db.db;
+    const [enr] = await db.select({ batchId: s.enrollment.batchId, branchId: s.enrollment.branchId }).from(s.enrollment).where(eq(s.enrollment.id, fromEnrollmentId));
+    if (!enr) return;
+    const [next] = await db
+      .select()
+      .from(s.admission)
+      .where(and(eq(s.admission.batchId, enr.batchId), eq(s.admission.status, 'waitlisted')))
+      .orderBy(asc(s.admission.submittedAt))
+      .limit(1);
+    if (!next) return;
+    const [batch] = await db.select({ code: s.batch.code }).from(s.batch).where(eq(s.batch.id, enr.batchId));
+    const admins = await usersWithRoleInBranch(db, ['branchadmin'], enr.branchId);
+    await this.notify.notify(db, {
+      userIds: [next.salesUserId, ...admins.map((x) => x.id)],
+      category: 'admission',
+      title: `Seat free in ${batch?.code ?? 'the batch'}`,
+      body: `${next.studentName} is first on the waitlist — approve from Admissions › Waitlist.`,
+      link: '/admissions',
+      entityType: 'admission',
+      entityId: next.id,
     });
   }
 

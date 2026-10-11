@@ -65,6 +65,11 @@ export function AdmissionsQueueScreen() {
     invalidate: [['admissions'], ['sales'], ['reference']],
     success: (r) => `Approved · ${r.admissionNo} · ${r.studentName}`,
   });
+  const waitlist = useApiMutation(admissionsContract.waitlist, {
+    invalidate: [['admissions'], ['sales']],
+    success: (r) => `${r.studentName} moved to the ${r.batchCode} waitlist`,
+  });
+  const waitlisting = waitlist.isPending;
   const items = q.data?.items ?? [];
   const showing = q.data && !q.isPlaceholderData;
   return (
@@ -99,7 +104,7 @@ export function AdmissionsQueueScreen() {
                   </tr>
                 ))}
               {items.map((a) => {
-                const pending = a.status === 'submitted' || a.status === 'fee_verified';
+                const pending = a.status === 'submitted' || a.status === 'fee_verified' || a.status === 'waitlisted';
                 const blocked = a.approveBlockedReason;
                 const approving = approve.isPending && approve.variables?.params.id === a.id;
                 return (
@@ -137,6 +142,11 @@ export function AdmissionsQueueScreen() {
                             <Button size="sm" variant="secondary" onClick={() => setReturning(a)}>
                               Return
                             </Button>
+                            {a.status === 'fee_verified' && a.seatsLeft <= 0 && (
+                              <Button size="sm" variant="secondary" loading={waitlisting} onClick={() => waitlist.mutate({ params: { id: a.id } })}>
+                                Move to waitlist
+                              </Button>
+                            )}
                             <Button size="sm" variant="primary" disabled={!!blocked} loading={approving} onClick={() => approve.mutate({ params: { id: a.id } })} title={blocked ?? undefined}>
                               Approve
                             </Button>
@@ -158,7 +168,6 @@ export function AdmissionsQueueScreen() {
                           {a.returnNote && <div className="mt-1 text-neutral-700">{a.returnNote}</div>}
                         </div>
                       )}
-                      {a.status === 'waitlisted' && <Tag variant="neutral">Waitlisted</Tag>}
                     </TD>
                   </tr>
                 );

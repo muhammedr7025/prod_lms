@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -23,6 +24,11 @@ async function api<T = unknown>(page: Page, method: 'GET' | 'POST', url: string,
   const res = method === 'GET' ? await page.request.get(`${base}${url}`) : await page.request.post(`${base}${url}`, { data: data ?? {}, headers: { Origin: base } });
   expect(res.ok(), `${method} ${url} → ${res.status()} ${await res.text()}`).toBeTruthy();
   return (await res.json()) as T;
+}
+
+const DB = process.env.DATABASE_URL ?? 'postgres://localhost:5432/exatech';
+function sql(query: string): string {
+  return execFileSync('psql', [DB, '-qtAX', '-v', 'ON_ERROR_STOP=1', '-c', query], { encoding: 'utf8' }).trim().split('\n')[0]!.trim();
 }
 
 interface LeadRow {
@@ -276,6 +282,43 @@ test.describe.serial('sales & admissions', () => {
     expect((await api<LeadRow>(page, 'GET', `/api/sales/leads/${lead.id}`)).stage).toBe('won');
     const after = await api<{ batches: { code: string; enrolled: number }[] }>(page, 'GET', '/api/sales/admission-options');
     expect(after.batches.find((b) => b.code === 'DM-B')!.enrolled).toBe(dmB.enrolled + 1);
+  });
+
+  test('batch full → Branch Admin moves Divya to the waitlist; a transfer frees a seat → offer → approve', async ({ page }) => {
+    // Fill DM-B to capacity so Divya (fee verified, DM-B) cannot be approved.
+    sql(`update batch set capacity = (select count(*) from enrollment e where e.batch_id = batch.id and e.status = 'active') where code = 'DM-B'`);
+    await loginAs(page, 'branchadmin');
+    await page.goto('/admissions');
+    const row = page.getByTestId('admission-row').filter({ hasText: 'Divya Pillai' });
+    await expect(row).toContainText('0 seats left · waitlist');
+    await expect(row).toContainText('No seats left in DM-B — move to waitlist');
+    await expect(row.getByRole('button', { name: 'Approve' })).toBeDisabled();
+    await row.getByRole('button', { name: 'Move to waitlist' }).click();
+    await expect(page.getByText('Divya Pillai moved to the DM-B waitlist')).toBeVisible();
+    await expect(row).toHaveCount(0);
+    expect(Number(sql(`select count(*) from notification where title = 'Divya Pillai is on the DM-B waitlist'`))).toBe(1);
+
+    await page.getByRole('radio', { name: 'Waitlist' }).click();
+    const waiting = page.getByTestId('admission-row').filter({ hasText: 'Divya Pillai' });
+    await expect(waiting).toContainText('Waitlisted for DM-B — approve when a seat frees up');
+    await expect(waiting.getByRole('button', { name: 'Approve' })).toBeDisabled();
+    await expect(waiting.getByRole('button', { name: 'Move to waitlist' })).toHaveCount(0);
+
+    // A DM-B student transfers out → the worker offers the freed seat to the first on the waitlist.
+    const studentId = sql(`select e.student_id from enrollment e join batch b on b.id = e.batch_id where b.code = 'DM-B' and e.status = 'active' order by e.created_at limit 1`);
+    const opts = await api<{ targets: { batchId: string; code: string; disabled: boolean }[]; defaultEffectiveDate: string }>(page, 'GET', `/api/academics/students/${studentId}/transfer-options`);
+    const target = opts.targets.find((t) => !t.disabled)!;
+    await api(page, 'POST', `/api/academics/students/${studentId}/transfer`, { toBatchId: target.batchId, effectiveDate: opts.defaultEffectiveDate, reason: 'Moved to a weekend batch' });
+    await expect
+      .poll(() => Number(sql(`select count(*) from notification n join "user" u on u.id = n.user_id where u.email = 'priya@exatech.test' and n.title = 'Seat free in DM-B'`)), { timeout: 20_000 })
+      .toBe(1);
+
+    await page.reload();
+    await page.getByRole('radio', { name: 'Waitlist' }).click();
+    await expect(waiting).toContainText('Seat available · ready for approval');
+    await waiting.getByRole('button', { name: 'Approve' }).click();
+    await expect(page.getByText(/Approved · TVM-DM-\d{4}-\d{5} · Divya Pillai/)).toBeVisible();
+    expect(sql(`select status || '|' || waitlist from admission where student_name = 'Divya Pillai'`)).toBe('approved|false');
   });
 
   test('Sales Manager: funnel, assignment rules and leaderboard render and act', async ({ page }) => {

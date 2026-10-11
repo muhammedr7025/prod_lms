@@ -3,6 +3,8 @@ import { AiDraftService } from './ai-draft.service';
 import { AnnouncementsService } from './announcements.service';
 import { AudienceService } from './audience.service';
 import { CommsController } from './comms.controller';
+import { ParentRequestsController } from './parent-requests.controller';
+import { ParentRequestsService } from './parent-requests.service';
 
 /**
  * Comms bounded context: announcements (audience targeting, scheduling, pin,
@@ -10,7 +12,7 @@ import { CommsController } from './comms.controller';
  * Owns announcement / announcement_recipient; emits AnnouncementPublished.
  */
 @Module({
-  controllers: [CommsController],
-  providers: [AudienceService, AnnouncementsService, AiDraftService],
+  controllers: [CommsController, ParentRequestsController],
+  providers: [AudienceService, AnnouncementsService, AiDraftService, ParentRequestsService],
 })
 export class CommsModule {}

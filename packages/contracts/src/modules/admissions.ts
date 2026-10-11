@@ -105,6 +105,8 @@ export const admissionsContract = {
     body: z.object({ to: z.enum(['sales', 'finance']).default('sales'), note: z.string().trim().min(3, 'Add a note for the person fixing it') }),
     response: zAdmissionRow,
   }),
+  /** Branch Admin: the batch is full — park a verified application on the waitlist (approve later when a seat frees). */
+  waitlist: route({ method: 'POST', path: '/api/admissions/:id/waitlist', response: zAdmissionRow }),
   /** Branch Admin final approval → AdmissionApproved (enrollment, invoices, accounts, seat, lead Won). */
   approve: route({ method: 'POST', path: '/api/admissions/:id/approve', response: zAdmissionRow }),
   cancel: route({ method: 'POST', path: '/api/admissions/:id/cancel', body: z.object({ reason: z.string().trim().min(3) }), response: zOk }),

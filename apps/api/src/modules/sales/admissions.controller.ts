@@ -66,6 +66,14 @@ export class AdmissionsController {
     return row!;
   }
 
+  @Endpoint(admissionsContract.waitlist)
+  @Can('admissions:approve')
+  async waitlist(@Input() { params }: Args<typeof admissionsContract.waitlist>) {
+    await this.admissions.waitlist(params.id);
+    const [row] = await this.admissions.rows(this.db.db, eq(s.admission.id, params.id));
+    return row!;
+  }
+
   @Endpoint(admissionsContract.cancel)
   @Can('admissions:update', 'admissions:delete')
   async cancel(@Input() { params, body }: Args<typeof admissionsContract.cancel>) {

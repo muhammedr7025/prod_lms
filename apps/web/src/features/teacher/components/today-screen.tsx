@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { useApi } from '@/lib/hooks';
 import { CoverDialog } from './cover-dialog';
 import { LeaveDialog } from './leave-dialog';
+import { ParentRequestsCard } from '@/features/comms/parent-requests-card';
 
 /** Teacher · Today — sessions with live marked counts, ad-hoc cards, cover, to-grade / marks tiles, leave. */
 export function TodayScreen() {
@@ -94,6 +95,8 @@ export function TodayScreen() {
           </div>
         ))}
       </Card>
+
+      <ParentRequestsCard compact />
 
       <CoverDialog open={coverOpen} onOpenChange={setCoverOpen} onStarted={goAttendance} />
       <LeaveDialog open={leaveOpen} onOpenChange={setLeaveOpen} />

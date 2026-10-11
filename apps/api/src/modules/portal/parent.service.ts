@@ -137,13 +137,15 @@ export class ParentService {
         summary: `About ${sc.name} (${sc.batchCode}) · pending moderation`,
         branchId: sc.branchId,
       });
-      if (teachers.length) {
+      // Moderated: Branch Admins approve first; the teacher is notified on approval.
+      const moderators = await this.shared.branchAdmins(sc.branchId, tx);
+      if (moderators.length) {
         await this.notify.notify(tx, {
-          userIds: teachers.map((t) => t.id),
+          userIds: moderators,
           category: 'message',
-          title: `Message from ${c.userName}`,
-          body: `Parent of ${sc.name} · ${sc.batchCode} · pending moderation`,
-          link: null,
+          title: `Parent message to moderate · ${sc.batchCode}`,
+          body: `${c.userName} (parent of ${sc.name}) → ${primary?.name ?? 'class teacher'}`,
+          link: '/branch',
           entityType: 'parent_message',
           entityId: row!.id,
         });
