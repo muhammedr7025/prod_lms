@@ -1,12 +1,16 @@
 import { Module } from '@nestjs/common';
+import { AiDraftService } from './ai-draft.service';
+import { AnnouncementsService } from './announcements.service';
+import { AudienceService } from './audience.service';
+import { CommsController } from './comms.controller';
 
 /**
- * Comms bounded context. Owns its controllers, services and event handlers.
- * Reads other contexts' tables only through queries; never writes them —
- * integration happens through domain events (see core/events/event-bus.ts).
+ * Comms bounded context: announcements (audience targeting, scheduling, pin,
+ * acknowledgement, WhatsApp fan-out) and the per-user feed the portals read.
+ * Owns announcement / announcement_recipient; emits AnnouncementPublished.
  */
 @Module({
-  controllers: [],
-  providers: [],
+  controllers: [CommsController],
+  providers: [AudienceService, AnnouncementsService, AiDraftService],
 })
 export class CommsModule {}

@@ -1,5 +1,13 @@
-import { ScreenPlaceholder } from '@/components/screen-placeholder';
+import { academicsOverviewContract } from '@exatech/contracts';
+import { BranchOpsScreen } from '@/features/academics';
+import { Prefetch, q } from '@/lib/prefetch';
+
+export const metadata = { title: 'Branch operations' };
 
 export default function Page() {
-  return <ScreenPlaceholder screen="bdash" />;
+  return (
+    <Prefetch queries={[q(academicsOverviewContract.overview, {})]}>
+      <BranchOpsScreen />
+    </Prefetch>
+  );
 }
