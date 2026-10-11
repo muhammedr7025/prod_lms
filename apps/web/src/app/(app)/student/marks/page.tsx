@@ -1,5 +1,13 @@
-import { ScreenPlaceholder } from '@/components/screen-placeholder';
+import { portalContract } from '@exatech/contracts';
+import { MarksScreen } from '@/features/portal';
+import { Prefetch, q } from '@/lib/prefetch';
+
+export const metadata = { title: 'Marks' };
 
 export default function Page() {
-  return <ScreenPlaceholder screen="smarks" />;
+  return (
+    <Prefetch queries={[q(portalContract.marks, { query: {} })]}>
+      <MarksScreen label="Student · Marks" />
+    </Prefetch>
+  );
 }

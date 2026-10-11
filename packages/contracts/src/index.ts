@@ -13,3 +13,4 @@ export * from './modules/sales';
 export * from './modules/teaching';
 export * from './modules/finance';
 export * from './modules/institution';
+export * from './modules/portal';
