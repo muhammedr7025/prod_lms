@@ -9,3 +9,4 @@ export * from './modules/checkin';
 export * from './modules/approvals';
 export * from './modules/academics';
 export * from './modules/comms';
+export * from './modules/sales';
