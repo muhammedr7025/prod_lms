@@ -134,6 +134,8 @@ export const paymentAllocation = pgTable(
     invoiceId: uuid(),
     amount: money().notNull(),
     reversed: boolean().default(false).notNull(),
+    /** Allocated from a cheque awaiting clearance (counts in instalment.pendingPaid, never unlocks content). */
+    pending: boolean().default(false).notNull(),
     createdAt: createdAt(),
   },
   (t) => [index().on(t.paymentId), index().on(t.instalmentId)],
