@@ -1,5 +1,12 @@
-import { ScreenPlaceholder } from '@/components/screen-placeholder';
+import { Suspense } from 'react';
+import { ImportScreen } from '@/features/sales';
+
+export const metadata = { title: 'Import leads' };
 
 export default function Page() {
-  return <ScreenPlaceholder screen="import" />;
+  return (
+    <Suspense>
+      <ImportScreen />
+    </Suspense>
+  );
 }

@@ -1,5 +1,13 @@
-import { ScreenPlaceholder } from '@/components/screen-placeholder';
+import { salesContract } from '@exatech/contracts';
+import { FollowUpsScreen } from '@/features/sales';
+import { Prefetch, q } from '@/lib/prefetch';
+
+export const metadata = { title: 'Follow-ups' };
 
 export default function Page() {
-  return <ScreenPlaceholder screen="followups" />;
+  return (
+    <Prefetch queries={[q(salesContract.followUps, {})]}>
+      <FollowUpsScreen />
+    </Prefetch>
+  );
 }

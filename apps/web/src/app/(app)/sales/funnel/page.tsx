@@ -1,5 +1,13 @@
-import { ScreenPlaceholder } from '@/components/screen-placeholder';
+import { salesContract } from '@exatech/contracts';
+import { FunnelScreen } from '@/features/sales';
+import { Prefetch, q } from '@/lib/prefetch';
+
+export const metadata = { title: 'Funnel' };
 
 export default function Page() {
-  return <ScreenPlaceholder screen="funnel" />;
+  return (
+    <Prefetch queries={[q(salesContract.funnel, { query: {} })]}>
+      <FunnelScreen />
+    </Prefetch>
+  );
 }

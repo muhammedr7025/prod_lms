@@ -1,5 +1,13 @@
-import { ScreenPlaceholder } from '@/components/screen-placeholder';
+import { salesContract } from '@exatech/contracts';
+import { LeaderboardScreen } from '@/features/sales';
+import { Prefetch, q } from '@/lib/prefetch';
+
+export const metadata = { title: 'Targets & leaderboard' };
 
 export default function Page() {
-  return <ScreenPlaceholder screen="leaderboard" />;
+  return (
+    <Prefetch queries={[q(salesContract.leaderboard, {})]}>
+      <LeaderboardScreen />
+    </Prefetch>
+  );
 }
