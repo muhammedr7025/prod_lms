@@ -32,6 +32,8 @@ export interface FinanceSettings {
   chequeUnlocksAfterClearance: boolean;
   reminderDaysBefore: number[];
   reminderDaysAfter: number[];
+  /** UPI VPA used for the desk's exact-amount QR (e.g. exatech@hdfcbank). */
+  upiVpa?: string | null;
 }
 
 export const institution = pgTable('institution', {

@@ -1,0 +1,1 @@
+ALTER TABLE "payment_allocation" ADD COLUMN "pending" boolean DEFAULT false NOT NULL;

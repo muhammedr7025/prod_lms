@@ -1,4 +1,4 @@
-import { Controller } from '@nestjs/common';
+import { Controller, type OnModuleInit } from '@nestjs/common';
 import { approvalsContract, type Approval } from '@exatech/contracts';
 import * as s from '@exatech/db';
 import { alias, and, desc, eq, inArray, ne, or, isNull, sql, type SQL } from '@exatech/db';
@@ -17,13 +17,40 @@ import { NotifyService } from './notifications/notify.service';
  * `ApprovalDecided` in-transaction handler.
  */
 @Controller()
-export class ApprovalsController {
+export class ApprovalsController implements OnModuleInit {
   constructor(
     private readonly db: Db,
     private readonly events: EventBus,
     private readonly audit: AuditService,
     private readonly notify: NotifyService,
   ) {}
+
+  /** Tell the people who can decide a request that it is waiting (in-app bell). */
+  onModuleInit() {
+    this.events.onAsync('ApprovalRequested', 'notify-approvers', async (p) => {
+      const [a] = await this.db.db.select().from(s.approvalRequest).where(eq(s.approvalRequest.id, p.approvalId));
+      if (!a || a.status !== 'pending') return;
+      const perm = a.level === 'super_admin' ? 'institution:approvals.decide' : 'finance:approve';
+      const rows = await this.db.db
+        .select({ userId: s.membership.userId, branchIds: s.membership.branchIds, roleKey: s.role.key })
+        .from(s.membership)
+        .innerJoin(s.role, eq(s.role.id, s.membership.roleId))
+        .innerJoin(s.user, eq(s.user.id, s.membership.userId))
+        .where(and(eq(s.membership.status, 'active'), eq(s.user.status, 'active'), sql`${perm} = any(${s.role.permissions})`));
+      const userIds = [
+        ...new Set(rows.filter((r) => r.userId !== a.requestedBy && (r.branchIds.length === 0 || !a.branchId || r.branchIds.includes(a.branchId))).map((r) => r.userId)),
+      ];
+      await this.notify.notify(this.db.db, {
+        userIds,
+        category: 'approval',
+        title: `Approval needed · ${a.title}`,
+        body: a.summary,
+        link: a.level === 'super_admin' ? '/overview' : '/finance',
+        entityType: 'approval',
+        entityId: a.id,
+      });
+    });
+  }
 
   private async rows(where: SQL | undefined): Promise<Approval[]> {
     const requester = alias(s.user, 'requester');

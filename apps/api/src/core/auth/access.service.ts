@@ -82,8 +82,10 @@ export class AccessService {
     return value;
   }
 
+  /** Settings changed: drop this process's copy and bump the shared version so other processes (worker, replicas) reload too. */
   invalidateInstitution() {
     this.institutionCache = null;
+    void this.bump().catch(() => undefined);
   }
 
   async activeBranches(): Promise<{ id: string; code: string; name: string }[]> {

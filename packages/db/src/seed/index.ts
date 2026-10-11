@@ -636,8 +636,39 @@ export async function seed(url = process.env.DATABASE_URL, anchorArg?: string) {
       await db.update(s.enrollment).set({ feeCleared: clr.cleared, clearedUntil: clr.clearedUntil, clearanceReason: clr.reason }).where(sql`id = ${st.enrollmentId}`);
     }
 
-    // Cheques pending clearance (do not unlock) — two TVM students paying their next instalment.
-    // (Recorded below after numbering so they get receipts too.)
+    // Cheques pending clearance (do not unlock) — two TVM students paid their next instalment by cheque yesterday.
+    const chequeStudents = students.filter((x) => x.batch.branch === 'TVM' && x.profile === 'current').slice(3, 5);
+    for (const st of chequeStudents) {
+      const next = instalmentRowsByEnrollment[st.enrollmentId]!.find((i) => i.paid < i.amount);
+      if (!next) continue;
+      const pid = id();
+      const amount = next.amount - next.paid;
+      const day = addDays(anchor, -1);
+      const receivedAt = istDateTime(day, '15:10');
+      finEvents.push({
+        kind: 'payment',
+        date: `${day}15:10`,
+        branch: st.batch.branch,
+        apply: async (number, seq) => {
+          await db.insert(s.payment).values({ id: pid, branchId: st.batch.branchId, enrollmentId: st.enrollmentId, studentId: st.id, receivedAt, total: amount, status: 'pending_clearance', channel: 'desk', receivedBy: userIds.joseph, idempotencyKey: `seed-${pid}` });
+          await db.insert(s.paymentTender).values({ paymentId: pid, method: 'cheque', amount, reference: `CHQ ${R.int(100000, 999999)}`, chequeStatus: 'pending' });
+          await db.insert(s.paymentAllocation).values({ paymentId: pid, instalmentId: next.id, invoiceId: null, amount, pending: true });
+          await db.update(s.instalment).set({ pendingPaid: amount }).where(sql`id = ${next.id}`);
+          await db.insert(s.receipt).values({ branchId: st.batch.branchId, paymentId: pid, number, fy, seq, issuedAt: receivedAt, verifyToken: token() });
+          await db.insert(s.ledgerEntry).values({ enrollmentId: st.enrollmentId, branchId: st.batch.branchId, at: receivedAt, kind: 'payment', description: 'Payment · Cheque · pending clearance', reference: number, credit: amount, paymentId: pid, createdBy: userIds.joseph });
+        },
+      });
+    }
+
+    // Dues follow-up history: reminders for everyone overdue, promises-to-pay for some (incl. Rohan's parent).
+    const duesRows: (typeof s.duesActivity.$inferInsert)[] = [];
+    for (const st of students.filter((x) => x.profile !== 'current')) {
+      duesRows.push({ enrollmentId: st.enrollmentId, kind: 'reminder', channel: 'whatsapp', note: 'Reminder · WhatsApp + invoice PDF', createdBy: userIds.joseph, createdAt: addDaysDate(now, -3) });
+      if (st.name === 'Rohan Menon' || R.chance(0.35)) {
+        duesRows.push({ enrollmentId: st.enrollmentId, kind: 'promise', channel: 'call', note: 'Call · parent promised to pay', promiseDate: addDays(anchor, R.int(1, 5)), createdBy: userIds.joseph, createdAt: addDaysDate(now, -2) });
+      }
+    }
+    await insertMany(db, s.duesActivity, duesRows);
 
     // Number invoices and receipts gap-free per branch in date order.
     const counters: Record<string, number> = {};
@@ -699,9 +730,12 @@ export async function seed(url = process.env.DATABASE_URL, anchorArg?: string) {
     }
 
     /* ── settlement (yesterday): matched online payments + 2 exceptions ── */
-    const settleItems = onlinePayments.filter((p) => p.date < anchor && p.date >= addDays(anchor, -10));
+    const recentOnline = onlinePayments.filter((p) => p.date < anchor && p.date >= addDays(anchor, -10));
+    // The last one settles ₹500 short of what was recorded ("amount differs" needs investigation).
+    const differs = recentOnline.length > 1 ? recentOnline[recentOnline.length - 1]! : null;
+    const settleItems = differs ? recentOnline.slice(0, -1) : recentOnline;
     const settlementId = id();
-    const settleTotal = settleItems.reduce((a, p) => a + p.amount, 0) + rupees(12000) + rupees(9000);
+    const settleTotal = settleItems.reduce((a, p) => a + p.amount, 0) + rupees(12000) + (differs ? differs.amount - rupees(500) : 0);
     await db.insert(s.settlement).values({
       id: settlementId,
       gateway: 'razorpay',
@@ -710,12 +744,14 @@ export async function seed(url = process.env.DATABASE_URL, anchorArg?: string) {
       amount: settleTotal,
       fees: Math.round(settleTotal * 0.02),
       utr: `UTR${R.int(10000000, 99999999)}`,
-      paymentCount: settleItems.length + 2,
+      paymentCount: settleItems.length + 1 + (differs ? 1 : 0),
     });
     await insertMany(db, s.settlementItem, [
       ...settleItems.map((p) => ({ settlementId, gatewayPaymentId: p.gatewayPaymentId, amount: p.amount, matchedPaymentId: p.paymentId, status: 'matched' as const })),
       { settlementId, gatewayPaymentId: `pay_${crypto.randomBytes(7).toString('hex')}`, amount: rupees(12000), notes: 'FS fee', status: 'unmatched' as const },
-      { settlementId, gatewayPaymentId: `pay_${crypto.randomBytes(7).toString('hex')}`, amount: rupees(9000), notes: 'Devika S · instalment', status: 'amount_differs' as const },
+      ...(differs
+        ? [{ settlementId, gatewayPaymentId: differs.gatewayPaymentId, amount: differs.amount - rupees(500), notes: `${differs.name} · instalment`, matchedPaymentId: differs.paymentId, status: 'amount_differs' as const }]
+        : []),
     ]);
 
     /* ── sessions & attendance ── */
