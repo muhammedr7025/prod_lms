@@ -1,5 +1,6 @@
 import { Global, Module } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { ApprovalsController } from './approvals.controller';
 import { AuditController } from './audit/audit.controller';
 import { AuditService } from './audit/audit.service';
 import { AccessService } from './auth/access.service';
@@ -56,6 +57,7 @@ const SERVICES = [
     NotificationsController,
     SearchController,
     AuditController,
+    ApprovalsController,
     FilesController,
     RealtimeController,
     DevController,
