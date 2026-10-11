@@ -114,3 +114,5 @@ Put your module's schemas in `packages/contracts/src/modules/<module>.ts` and ad
 - `numeric({mode:'number'})` columns come back as numbers; raw `sql` counts come back as strings — wrap with `Number()`.
 - Next.js 15: `params`/`searchParams` in pages are Promises.
 - The API runs worker loops in-process in dev (EMBED_WORKER default); async event handlers run there.
+- Drizzle: in a single-table select, `${table.col}` inside a `sql\`…\`` subquery renders **unqualified** and can bind to the subquery's own column (e.g. a count that is always 0). Qualify explicitly (`sql\`… where m.material_id = material.id\``) or alias the outer table.
+- Shared machine: name temp/pid/log files with your module prefix (`/tmp/exa-<module>-api.log`) and kill only the PIDs you started.
