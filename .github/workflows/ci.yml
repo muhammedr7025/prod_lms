@@ -35,6 +35,11 @@ jobs:
       redis:
         image: redis:7-alpine
         ports: ['6379:6379']
+      minio:
+        # minio/minio and bitnami/minio were removed from Docker Hub; bitnamilegacy still publishes it.
+        image: bitnamilegacy/minio:latest
+        env: { MINIO_ROOT_USER: minioadmin, MINIO_ROOT_PASSWORD: minioadmin }
+        ports: ['9000:9000']
       mailpit:
         image: axllent/mailpit:latest
         ports: ['1025:1025', '8025:8025']
@@ -48,8 +53,6 @@ jobs:
         with: { version: 10.21.0 }
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: pnpm }
-      # MinIO needs a command (`server /data`), which job services cannot pass — start it as a step.
-      - run: docker run -d --name minio -p 9000:9000 -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin minio/minio:latest server /data
       - run: pnpm install --frozen-lockfile
       - run: pnpm setup:local
       - run: cd apps/web && npx playwright install --with-deps chromium
