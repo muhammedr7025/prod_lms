@@ -5,6 +5,9 @@ import { AppShell } from '@/components/shell/app-shell';
 import { NoAccess } from '@/components/no-access';
 import { getMe } from '@/lib/server';
 
+/** Signed-in pages depend on the session: never pre-render them at build time. */
+export const dynamic = 'force-dynamic';
+
 /**
  * Every authenticated route renders inside the shell. The server resolves
  * the session first: signed out → sign-in, 2FA pending → 2FA, screen not

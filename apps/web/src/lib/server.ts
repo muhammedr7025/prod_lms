@@ -3,6 +3,7 @@ import { coreContract, type Me, type RouteDef } from '@exatech/contracts';
 import { cookies, headers } from 'next/headers';
 import { cache } from 'react';
 import { ApiError, callApi, type ApiArgs, type ApiResult } from './api';
+import { unstable_rethrow } from 'next/navigation';
 
 const API_URL = process.env.API_URL ?? 'http://localhost:4300';
 
@@ -21,6 +22,7 @@ export const getMe = cache(async (): Promise<{ me: Me | null; error: ApiError | 
     const me = await serverApi(coreContract.me, {});
     return { me, error: null };
   } catch (err) {
+    unstable_rethrow(err); // let Next's dynamic-rendering signals through (cookies() at build time)
     if (err instanceof ApiError) return { me: null, error: err };
     return { me: null, error: new ApiError(503, 'API_UNAVAILABLE', 'The API is not reachable') };
   }
