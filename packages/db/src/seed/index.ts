@@ -1252,7 +1252,9 @@ export async function seed(url = process.env.DATABASE_URL, anchorArg?: string) {
         db,
         s.announcementRecipient,
         uniq.map((u) => {
-          const read = R.chance(a.readPct);
+          // Demo personas always start unread/unacknowledged (e2e relies on it, whatever the date).
+          const persona = u === sureshUserId || u === students.find((x) => x.name === 'Anjali Menon')?.userId;
+          const read = !persona && R.chance(a.readPct);
           return { announcementId: aid, userId: u, readAt: read ? addDaysDate(now, a.ago + 1) : null, ackedAt: a.ack && read && R.chance(0.9) ? addDaysDate(now, a.ago + 1) : null };
         }),
         1000,
