@@ -15,3 +15,9 @@ tmp
 apps/web/next-env.d.ts
 apps/web/test-results
 .claude/worktrees/
+
+# Client data (personal information) — never commit
+*.xlsx
+*.xls
+*.csv
+.env.live

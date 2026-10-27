@@ -15,6 +15,13 @@
       "when": 1791730695748,
       "tag": "0001_payment_allocation_pending",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793081279260,
+      "tag": "0002_certifying_body",
+      "breakpoints": true
     }
   ]
 }

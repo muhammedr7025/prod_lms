@@ -219,6 +219,8 @@ export interface LateFeeRule {
   graceDays: number; // default 3
   perDay: Paise; // default ₹100
   capPct: number; // of the instalment amount, default 5
+  /** Optional fixed cap. perDay = capAmount with graceDays = 90 gives a flat fee once 90 days late. */
+  capAmount?: Paise;
 }
 
 export const DEFAULT_LATE_FEE: LateFeeRule = { graceDays: 3, perDay: 10_000, capPct: 5 };
@@ -233,7 +235,7 @@ export function computeLateFee(
   const lateDays = daysBetween(inst.dueDate, today) - rule.graceDays;
   if (lateDays <= 0) return 0;
   const cap = percentOf(inst.amount, rule.capPct);
-  return Math.min(lateDays * rule.perDay, cap);
+  return Math.min(lateDays * rule.perDay, cap, rule.capAmount ?? Number.POSITIVE_INFINITY);
 }
 
 /* ───────────────────────── Dues ageing ───────────────────────── */

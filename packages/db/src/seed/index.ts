@@ -23,6 +23,7 @@ import {
 import { sql } from 'drizzle-orm';
 import type { PgTable } from 'drizzle-orm/pg-core';
 import { createDb, type Database } from '../client';
+import { assertNotLive } from '../live-guard';
 import * as s from '../schema';
 import { uuidv7 } from '../schema/_helpers';
 import type { InstitutionSettings } from '../schema/org';
@@ -77,6 +78,7 @@ export async function seed(url = process.env.DATABASE_URL, anchorArg?: string) {
 
   try {
     /* ── wipe ── */
+    await assertNotLive(h.sql, new URL(url ?? 'postgres://localhost/exatech').pathname.slice(1));
     const tables = await h.sql<{ tablename: string }[]>`select tablename from pg_tables where schemaname = 'public' and tablename not like '__drizzle%'`;
     await h.sql.unsafe(`truncate table ${tables.map((t) => `"${t.tablename}"`).join(', ')} restart identity cascade`);
 
@@ -1334,7 +1336,7 @@ export async function seed(url = process.env.DATABASE_URL, anchorArg?: string) {
  * A reseed replaces every id, so drop the API's Redis caches (memberships,
  * branches, public config…) and bump the access version that keys them.
  */
-async function flushApiCaches(): Promise<void> {
+export async function flushApiCaches(): Promise<void> {
   const prefix = process.env.REDIS_PREFIX ?? 'exa';
   const { default: IORedis } = await import('ioredis');
   const redis = new IORedis(process.env.REDIS_URL ?? 'redis://localhost:6379/0', { lazyConnect: true, maxRetriesPerRequest: 1 });

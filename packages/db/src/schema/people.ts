@@ -83,6 +83,12 @@ export const enrollment = pgTable(
     /** Credit balance held on the fee account (overpayments, advances). */
     creditBalance: money().default(0).notNull(),
     admissionId: uuid(),
+    /** Registration with the certifying body: overrides the course's body when the student registered differently. */
+    awardingBody: text(),
+    bodyRegNo: text(),
+    /** Fee the institute pays the certifying body for this student (not billed to the student). */
+    bodyFee: money(),
+    bodyFeeSubmittedOn: date(),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

@@ -10,6 +10,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "generate": "drizzle-kit generate",
     "migrate": "node --env-file-if-exists=../../apps/api/.env dist/migrate.js",
+    "onboard": "node dist/onboard/index.js",
     "seed": "node --env-file-if-exists=../../apps/api/.env dist/seed/index.js",
     "reset": "node --env-file-if-exists=../../apps/api/.env dist/reset.js && node --env-file-if-exists=../../apps/api/.env dist/migrate.js && node --env-file-if-exists=../../apps/api/.env dist/seed/index.js"
   },

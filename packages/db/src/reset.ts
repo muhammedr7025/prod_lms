@@ -1,4 +1,5 @@
 import postgres from 'postgres';
+import { assertNotLive } from './live-guard';
 
 /** Drops and recreates the database named in DATABASE_URL. Refuses to run in production. */
 async function main() {
@@ -8,6 +9,14 @@ async function main() {
   const u = new URL(url);
   const name = u.pathname.replace(/^\//, '');
   if (!/^[a-z0-9_]+$/i.test(name)) throw new Error(`Unsafe database name: ${name}`);
+  const target = postgres(url, { max: 1, onnotice: () => {} });
+  try {
+    await assertNotLive(target, name);
+  } catch (e) {
+    if (!/does not exist/.test(String(e))) throw e;
+  } finally {
+    await target.end();
+  }
   u.pathname = '/postgres';
   const admin = postgres(u.toString(), { max: 1, onnotice: () => {} });
   try {

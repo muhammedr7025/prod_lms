@@ -151,6 +151,13 @@ describe('payments', () => {
     expect(computeLateFee(inst, '2026-12-31')).toBe(rupees(1080)); // 5% cap
     expect(computeLateFee({ ...inst, balance: 0 }, '2026-12-31')).toBe(0);
   });
+  it('flat late fee: ₹1,000 once 90 days overdue (capAmount)', () => {
+    const rule = { graceDays: 90, perDay: rupees(1000), capPct: 100, capAmount: rupees(1000) };
+    const inst = { dueDate: '2026-10-01', amount: rupees(55000), balance: rupees(55000) };
+    expect(computeLateFee(inst, '2026-12-30', rule)).toBe(0);
+    expect(computeLateFee(inst, '2026-12-31', rule)).toBe(rupees(1000));
+    expect(computeLateFee(inst, '2027-06-01', rule)).toBe(rupees(1000));
+  });
   it('validates desk tenders', () => {
     expect(validateDeskPayment([{ method: 'cash', amount: rupees(500) }], rupees(15000)).ok).toBe(false);
     expect(validateDeskPayment([{ method: 'cash', amount: rupees(500) }], rupees(500)).ok).toBe(true);

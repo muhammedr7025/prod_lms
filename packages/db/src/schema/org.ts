@@ -3,6 +3,8 @@ import { boolean, date, index, integer, jsonb, numeric, pgTable, text, uniqueInd
 import { createdAt, money, pk, tsz, updatedAt } from './_helpers';
 
 export interface InstitutionSettings {
+  /** Set by the onboarding import: real institute data. Seed/reset refuse to wipe it. */
+  live?: boolean;
   clearancePolicy: ClearancePolicy;
   discountThresholds: DiscountThresholds;
   admissionNumberPattern: string;
@@ -123,6 +125,10 @@ export const course = pgTable(
     durationMonths: integer().notNull(),
     modality: text({ enum: ['offline', 'online', 'hybrid'] }).notNull(),
     description: text(),
+    /** Certifying / awarding body (e.g. STED, BECIL) — shown on certificates and receipts. */
+    awardingBody: text(),
+    /** Minimum qualification, as the institute words it (SSLC, Plus Two, Degree…). */
+    eligibility: text(),
     /** Per-course override of the institution clearance policy. */
     clearancePolicy: jsonb().$type<ClearancePolicy>(),
     gradeScheme: jsonb().$type<GradeBand[]>(),
