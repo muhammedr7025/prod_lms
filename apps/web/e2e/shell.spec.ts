@@ -38,6 +38,21 @@ test.describe('shell & identity', () => {
     await expect(page.locator('nav').getByRole('link', { name: 'Attendance' })).toBeVisible();
   });
 
+  test('signed-out redirect uses the public host the proxy forwards (never localhost)', async ({ playwright }) => {
+    const base = test.info().project.use.baseURL ?? 'http://localhost:3300';
+    const anon = await playwright.request.newContext({ baseURL: base, maxRedirects: 0 });
+    const origin = 'https://learner.example.test';
+    for (const [path, expected] of [['/', '/sign-in'], ['/overview', '/sign-in?next=%2Foverview'], ['/students?q=a', '/sign-in?next=%2Fstudents%3Fq%3Da']] as const) {
+      const res = await anon.get(path, { headers: { 'x-forwarded-host': 'learner.example.test', 'x-forwarded-proto': 'https' } });
+      expect(res.status(), path).toBe(307);
+      expect(res.headers().location, path).toBe(origin + expected);
+    }
+    // A malformed Host header is ignored rather than echoed back.
+    const bad = await anon.get('/overview', { headers: { 'x-forwarded-host': 'evil.test/<script>' } });
+    expect(bad.headers().location).not.toContain('evil.test');
+    await anon.dispose();
+  });
+
   test('membership switch: Sanjay moves from Sales Manager to Teacher', async ({ page }) => {
     await loginAs(page, 'salesmanager');
     await page.goto('/');

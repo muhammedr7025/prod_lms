@@ -28,6 +28,15 @@ function contentSecurityPolicy(nonce: string): string {
   ].join('; ');
 }
 
+/** The origin the browser used (nginx forwards Host / X-Forwarded-Proto); falls back to the request's own origin. */
+function publicOrigin(req: NextRequest): string {
+  const host = (req.headers.get('x-forwarded-host') ?? req.headers.get('host') ?? '').split(',')[0]!.trim();
+  const proto = (req.headers.get('x-forwarded-proto') ?? '').split(',')[0]!.trim();
+  const validHost = /^[a-z0-9]([a-z0-9.-]*[a-z0-9])?(:\d{1,5})?$/i.test(host);
+  if (!validHost) return req.nextUrl.origin;
+  return `${proto === 'http' || proto === 'https' ? proto : req.nextUrl.protocol.replace(':', '')}://${host}`;
+}
+
 /**
  * Edge check: no session cookie → sign-in. The API re-verifies every request
  * (expiry, idle timeout, 2FA, role × scope); this only avoids a wasted render.
@@ -43,10 +52,10 @@ export function middleware(req: NextRequest) {
 
   const isPublic = PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(p));
   if (!isPublic && !SESSION_COOKIES.some((c) => req.cookies.has(c))) {
-    const url = req.nextUrl.clone();
-    url.pathname = '/sign-in';
-    url.search = pathname === '/' ? '' : `?next=${encodeURIComponent(pathname + search)}`;
-    return NextResponse.redirect(url);
+    // Behind a reverse proxy the app only knows its own listen address (localhost:3300), so an origin taken
+    // from req.nextUrl would send visitors to localhost. Use the public host the proxy forwards instead.
+    const to = `/sign-in${pathname === '/' ? '' : `?next=${encodeURIComponent(pathname + search)}`}`;
+    return NextResponse.redirect(new URL(to, publicOrigin(req)));
   }
   const res = NextResponse.next({ request: { headers } });
   if (!pathname.startsWith('/api')) res.headers.set('Content-Security-Policy', csp);
