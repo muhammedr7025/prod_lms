@@ -37,13 +37,21 @@ export class OnlineService {
     private readonly audit: AuditService,
   ) {}
 
+  /**
+   * The sandbox gateway approves any payment on request, so it only exists outside production.
+   * In production, online payment stays off until real Razorpay keys are configured.
+   */
   gateway(): PaymentGateway {
     if (razorpayConfigured()) return (this.razorpay ??= new RazorpayGateway());
+    if (env().NODE_ENV === 'production') throw invalid('Online payment is not available yet — please pay at the institute');
     return this.sandbox;
   }
 
   private gatewayFor(name: string): PaymentGateway {
-    if (name === 'sandbox') return this.sandbox;
+    if (name === 'sandbox') {
+      if (env().NODE_ENV === 'production') throw badRequest('The sandbox gateway is not available in production');
+      return this.sandbox;
+    }
     if (!razorpayConfigured()) throw badRequest('Razorpay is not configured');
     return (this.razorpay ??= new RazorpayGateway());
   }
@@ -149,6 +157,7 @@ export class OnlineService {
   /** Sandbox: the simulated gateway posts a signed webhook to our own webhook handler (same path as Razorpay). */
   async sandboxComplete(orderId: string, outcome: 'success' | 'failure', method: string) {
     const o = await this.portalOrder(orderId);
+    if (env().NODE_ENV === 'production') throw invalid('The sandbox gateway is not available in production');
     if (o.gateway !== 'sandbox') throw invalid('This order is not a sandbox order');
     if (o.status === 'paid') return this.status(o.id);
     const hook = SandboxGateway.webhook({ externalOrderId: o.externalOrderId, amount: o.amount, method, outcome });
