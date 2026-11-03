@@ -13,7 +13,7 @@ set -euo pipefail
 
 HOST="${DEPLOY_HOST:?set DEPLOY_HOST, e.g. root@129.121.168.86}"
 SSH="${DEPLOY_SSH:-ssh}"
-PUBLIC_FILES_ORIGIN="${PUBLIC_FILES_ORIGIN:-https://files.exatech.muhammedr.me}"
+PUBLIC_FILES_ORIGIN="${PUBLIC_FILES_ORIGIN:-https://files.learner.exatechlearninghub.com}"
 cd "$(git rev-parse --show-toplevel)"
 
 if [ -n "$(git status --porcelain --untracked-files=no)" ]; then

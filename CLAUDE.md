@@ -49,10 +49,10 @@ Real data lives in **`exatech_live`**; `exatech` stays the demo database for dev
 - Run e2e tests only against the demo stack (default `apps/api/.env`). The seed, e2e `reseed()` and `db:reset` **refuse to wipe a database marked live** (`institution.settings.live`); override only with `EXATECH_WIPE_LIVE=<db>`.
 - (Re)import: `DATABASE_URL=…/exatech_live EXATECH_WIPE_LIVE=exatech_live node packages/db/dist/onboard/index.js ~/Documents/exatech-private/onboarding.json`. The JSON and the institute's spreadsheets hold personal data — keep them outside the repo (`*.xlsx`/`*.csv` are git-ignored).
 
-### Production server (exatech.muhammedr.me)
+### Production server (learner.exatechlearninghub.com)
 Ubuntu 26.04 VPS (2 CPU / 4 GB + 4 GB swap). Everything lives under `/srv/exatech`; secrets are generated on the server in `/srv/exatech/secrets.env` and `api.env` (root-owned, never in git, never in chat).
 - **Services** (systemd): `exatech-api` (:4300), `exatech-worker` (outbox, emails, jobs — **must run in production; the API does not embed it**), `exatech-web` (:3300), plus `garage` (S3 storage, :3900), `postgresql` (18), `redis-server`, `nginx`. Only 22/80/443 are open (ufw); everything else is bound to localhost.
-- **Hostnames**: `exatech.muhammedr.me` (app) and `files.exatech.muhammedr.me` (storage — signed file links use `S3_ENDPOINT` directly, so it must be public). Both need DNS A records to the server and a Let's Encrypt certificate (`certbot --nginx -d exatech.muhammedr.me -d files.exatech.muhammedr.me`).
+- **Hostnames**: `learner.exatechlearninghub.com` (app) and `files.learner.exatechlearninghub.com` (storage — signed file links use `S3_ENDPOINT` directly, so it must be public). Both need DNS A records to the server and a Let's Encrypt certificate (`certbot --nginx -d learner.exatechlearninghub.com -d files.learner.exatechlearninghub.com`).
 - **Deploy**: `DEPLOY_HOST=root@<server> scripts/deploy.sh` (ships committed code only, builds beside the live copy, backs up, migrates, swaps, restarts; previous copy kept in `app.prev`).
 - **Backups**: `/usr/local/bin/exatech-backup` nightly 02:30 IST → `/var/backups/exatech` (14 days; restore-tested). Copy them off the server too.
 - **Logs**: `journalctl -u exatech-api -u exatech-worker -u exatech-web -f`.
