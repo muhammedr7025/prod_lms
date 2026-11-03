@@ -70,7 +70,7 @@ export class MeController {
       const [by] = await this.db.db.select({ name: s.user.name }).from(s.user).where(eq(s.user.id, session.impersonatedBy));
       impersonation = { byName: by?.name ?? 'Super Admin', expiresAt: new Date(session.expiresAt).toISOString() };
     }
-    const requires2fa = user.twoFactorEnabled || institution.settings.security.require2faRoles.includes(m.roleKey);
+    const requires2fa = user.twoFactorEnabled || (!env().DISABLE_2FA_ENFORCEMENT && institution.settings.security.require2faRoles.includes(m.roleKey));
     const initials = user.name
       .split(/\s+/)
       .filter(Boolean)

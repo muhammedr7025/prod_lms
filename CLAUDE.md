@@ -57,6 +57,7 @@ Ubuntu 26.04 VPS (2 CPU / 4 GB + 4 GB swap). Everything lives under `/srv/exatec
 - **Backups**: `/usr/local/bin/exatech-backup` nightly 02:30 IST → `/var/backups/exatech` (14 days; restore-tested). Copy them off the server too.
 - **Logs**: `journalctl -u exatech-api -u exatech-worker -u exatech-web -f`.
 - **Payments**: the sandbox gateway is refused in production. Online payment stays off until `RAZORPAY_KEY_ID/SECRET/WEBHOOK_SECRET` are set in `api.env`.
+- **2-step verification** is currently OFF on production (`DISABLE_2FA_ENFORCEMENT=true` in `api.env`; the API logs a warning at every start). Remove that line and restart `exatech-api` to force it again on the owner and finance roles; anyone who enrolled themselves still uses it.
 - **Email**: sign-in links need `RESEND_API_KEY` (or `SMTP_*`) and a verified `MAIL_FROM` in `api.env`, then `systemctl restart exatech-api exatech-worker`.
 - Import data on the server: copy the JSON there (chmod 600) and run `node packages/db/dist/onboard/index.js <file>` as the `exatech` user with `api.env` loaded (needs `EXATECH_WIPE_LIVE=exatech_live` once the database is marked live).
 

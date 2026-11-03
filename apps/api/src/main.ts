@@ -57,6 +57,7 @@ async function bootstrap() {
   app.enableShutdownHooks();
   await app.listen({ port: e.API_PORT, host: '0.0.0.0' });
   Logger.log(`API listening on :${e.API_PORT} (web origin ${e.WEB_ORIGIN})`, 'Bootstrap');
+  if (e.DISABLE_2FA_ENFORCEMENT) Logger.warn('2-step verification is NOT being enforced for the owner/finance roles (DISABLE_2FA_ENFORCEMENT=true). Remove it from api.env to turn it back on.', 'Security');
 
   // Development convenience: run the worker loops in-process unless a separate worker runs.
   if (process.env.EMBED_WORKER !== 'false' && e.NODE_ENV !== 'production') {

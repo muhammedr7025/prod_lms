@@ -12,6 +12,7 @@ import { DomainError, forbidden, unauthenticated } from '../errors';
 import { ALLOW_2FA_PENDING, ALLOW_READONLY, PERMS, PUBLIC } from '../http';
 import { AccessService } from './access.service';
 import { AuthService } from './auth.service';
+import { env } from '../../config/env';
 
 export interface SessionInfo {
   id: string;
@@ -97,7 +98,7 @@ export class AuthGuard implements CanActivate {
     const m = memberships.find((x) => x.id === session.activeMembershipId) ?? memberships[0]!;
 
     // Mandatory 2FA for configured roles (and for anyone who enabled it).
-    const requires2fa = user.twoFactorEnabled || security.require2faRoles.includes(m.roleKey);
+    const requires2fa = user.twoFactorEnabled || (!env().DISABLE_2FA_ENFORCEMENT && security.require2faRoles.includes(m.roleKey));
     let needs2faEnrollment = false;
     if (requires2fa && !session.twoFactorVerified) {
       const allowPending = this.reflector.getAllAndOverride<boolean>(ALLOW_2FA_PENDING, targets);

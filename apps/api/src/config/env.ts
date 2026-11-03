@@ -17,6 +17,8 @@ const schema = z.object({
   AUTH_SECRET: z.string().min(32).default('dev-only-secret-change-me-0123456789abcdef'),
   /** Enables demo accounts on the sign-in page and the dev outbox. Never in production. */
   DEMO_MODE: bool,
+  /** Temporarily stop forcing 2-step verification on the owner and finance roles (people who enrolled themselves still use it). Off = enforced. */
+  DISABLE_2FA_ENFORCEMENT: bool,
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
   S3_ENDPOINT: z.string().default('http://localhost:9000'),

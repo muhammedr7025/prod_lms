@@ -9,6 +9,7 @@ import { can } from '../../core/context';
 import { Db } from '../../core/db';
 import { invalid, notFound } from '../../core/errors';
 import { NotifyService } from '../../core/notifications/notify.service';
+import { env } from '../../config/env';
 
 const policyText = (p: ClearancePolicy) => (p.kind === 'percentage' ? `${p.percentage}% paid` : p.kind === 'fully_paid' ? 'fully paid' : 'current instalment paid');
 
@@ -54,7 +55,7 @@ export class SettingsService {
       discountThresholds: st.discountThresholds,
       admissionNumberPattern: st.admissionNumberPattern,
       security: {
-        require2faRoles: [...new Set([...ALWAYS_2FA_ROLES, ...st.security.require2faRoles])],
+        require2faRoles: env().DISABLE_2FA_ENFORCEMENT ? [...st.security.require2faRoles] : [...new Set([...ALWAYS_2FA_ROLES, ...st.security.require2faRoles])],
         staffSessionHours: st.security.staffSessionHours,
         staffIdleMinutes: st.security.staffIdleMinutes,
         portalSessionDays: st.security.portalSessionDays,
@@ -63,7 +64,7 @@ export class SettingsService {
       leadRetentionMonths: st.leadRetentionMonths,
       preview: { branchCode: branch?.code ?? 'TVM', courseCode: course?.code ?? 'DM', year, fy, nextSeq: seq?.next ?? 1 },
       roles,
-      locked2faRoles: [...ALWAYS_2FA_ROLES],
+      locked2faRoles: env().DISABLE_2FA_ENFORCEMENT ? [] : [...ALWAYS_2FA_ROLES],
       canManage: can('institution:settings.manage'),
     };
   }
