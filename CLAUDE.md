@@ -49,6 +49,17 @@ Real data lives in **`exatech_live`**; `exatech` stays the demo database for dev
 - Run e2e tests only against the demo stack (default `apps/api/.env`). The seed, e2e `reseed()` and `db:reset` **refuse to wipe a database marked live** (`institution.settings.live`); override only with `EXATECH_WIPE_LIVE=<db>`.
 - (Re)import: `DATABASE_URL=…/exatech_live EXATECH_WIPE_LIVE=exatech_live node packages/db/dist/onboard/index.js ~/Documents/exatech-private/onboarding.json`. The JSON and the institute's spreadsheets hold personal data — keep them outside the repo (`*.xlsx`/`*.csv` are git-ignored).
 
+### Production server (exatech.muhammedr.me)
+Ubuntu 26.04 VPS (2 CPU / 4 GB + 4 GB swap). Everything lives under `/srv/exatech`; secrets are generated on the server in `/srv/exatech/secrets.env` and `api.env` (root-owned, never in git, never in chat).
+- **Services** (systemd): `exatech-api` (:4300), `exatech-worker` (outbox, emails, jobs — **must run in production; the API does not embed it**), `exatech-web` (:3300), plus `garage` (S3 storage, :3900), `postgresql` (18), `redis-server`, `nginx`. Only 22/80/443 are open (ufw); everything else is bound to localhost.
+- **Hostnames**: `exatech.muhammedr.me` (app) and `files.exatech.muhammedr.me` (storage — signed file links use `S3_ENDPOINT` directly, so it must be public). Both need DNS A records to the server and a Let's Encrypt certificate (`certbot --nginx -d exatech.muhammedr.me -d files.exatech.muhammedr.me`).
+- **Deploy**: `DEPLOY_HOST=root@<server> scripts/deploy.sh` (ships committed code only, builds beside the live copy, backs up, migrates, swaps, restarts; previous copy kept in `app.prev`).
+- **Backups**: `/usr/local/bin/exatech-backup` nightly 02:30 IST → `/var/backups/exatech` (14 days; restore-tested). Copy them off the server too.
+- **Logs**: `journalctl -u exatech-api -u exatech-worker -u exatech-web -f`.
+- **Payments**: the sandbox gateway is refused in production. Online payment stays off until `RAZORPAY_KEY_ID/SECRET/WEBHOOK_SECRET` are set in `api.env`.
+- **Email**: sign-in links need `RESEND_API_KEY` (or `SMTP_*`) and a verified `MAIL_FROM` in `api.env`, then `systemctl restart exatech-api exatech-worker`.
+- Import data on the server: copy the JSON there (chmod 600) and run `node packages/db/dist/onboard/index.js <file>` as the `exatech` user with `api.env` loaded (needs `EXATECH_WIPE_LIVE=exatech_live` once the database is marked live).
+
 ### Demo personas (seed)
 Deepu S Nath (Super Admin, `deepu@exatech.test`) · Priya Varghese (Branch Admin TVM + Teacher DA-C, `priya@`) · Meera Pillai (Sales, `meera@`) · Sanjay Kumar (Sales Manager TVM + Teacher FS-B/FS-C, `sanjay@`) · Joseph Mathew (Finance TVM·EKM + Branch Admin EKM, `joseph@`) · Rema Nair (cashier, `rema@`) · Nithin Raj (Teacher DM-A Search·SEO / DM-B Paid media, `nithin@`) · Anjali Menon (Student DM-A, TVM-DM-2027-00142, instalment 2 ₹15,000 overdue → fee-gated notes **locked**, `anjali.menon@example.test`) · Suresh Menon (Parent of Anjali + Rohan, `suresh.menon@example.test`). Rohan Menon (FS-B, TVM-FS-2027-00098) ₹15,000 overdue 10 days, attendance ~69%, 2 assignments missed. Admissions queue: Aiswarya Suresh (FS-C, 22% → waiting Super Admin), Divya Pillai (DM-B, ready for Branch Admin), Kiran Thomas & Neha George (Finance queue), Ashwin Mohan (returned to Sales).
 
