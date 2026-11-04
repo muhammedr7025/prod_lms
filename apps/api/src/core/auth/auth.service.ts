@@ -18,8 +18,20 @@ const RETURN_COOKIE = 'exa_imp_return';
 function methodFromPath(path: string | undefined): string | null {
   if (!path) return null;
   if (path.startsWith('/magic-link')) return 'magic_link';
+  if (path.startsWith('/sign-in/email')) return 'password';
   if (path.startsWith('/phone-number')) return 'phone_otp';
   if (path.startsWith('/callback') || path.startsWith('/oauth2')) return 'google';
+  return null;
+}
+
+/** Why a new password is not acceptable (shown to the user), or null when it is fine. */
+export function passwordProblem(next: string, current?: string): string | null {
+  if (next.length < 10) return 'Use at least 10 characters';
+  if (next.length > 128) return 'Use at most 128 characters';
+  if (!/[A-Za-z]/.test(next) || !/\d/.test(next)) return 'Use both letters and numbers';
+  if (/exatech/i.test(next)) return 'Do not use the institute name in your password';
+  if (/^(password|12345678|qwerty|abcd1234)/i.test(next)) return 'That password is too easy to guess';
+  if (current && next === current) return 'Choose a password different from the temporary one';
   return null;
 }
 
@@ -141,7 +153,8 @@ export function createAuth(deps: AuthDeps) {
         provider: 'pg',
         schema: { user: s.user, session: s.session, account: s.account, verification: s.verification },
       }),
-      emailAndPassword: { enabled: false },
+      // Password sign-in exists for accounts an administrator gave a (temporary) password; nobody can register.
+      emailAndPassword: { enabled: true, disableSignUp: true, minPasswordLength: 10, maxPasswordLength: 128, autoSignIn: false },
       advanced: {
         database: { generateId: () => s.uuidv7() },
         cookiePrefix: 'exa',
@@ -168,6 +181,7 @@ export function createAuth(deps: AuthDeps) {
           kind: { type: 'string', required: false, input: false },
           status: { type: 'string', required: false, input: false },
           twoFactorEnabled: { type: 'boolean', required: false, input: false },
+          mustChangePassword: { type: 'boolean', required: false, input: false },
         },
       },
       account: {
@@ -184,6 +198,8 @@ export function createAuth(deps: AuthDeps) {
         storage: 'memory',
         customRules: {
           '/sign-in/magic-link': { window: 60, max: 5 },
+          '/sign-in/email': { window: 60, max: 60 }, // safety net only; the real limits (5 per address, 30 per IP / 15 min) are in the before-hook
+          '/change-password': { window: 60, max: 10 },
           '/phone-number/send-otp': { window: 60, max: 5 },
           '/phone-number/verify': { window: 60, max: 10 },
         },
@@ -298,6 +314,21 @@ export function createAuth(deps: AuthDeps) {
       ],
       hooks: {
         before: createAuthMiddleware(async (inner) => {
+          // Password sign-in: wrong guesses are limited per address and per IP, whether or not the account exists
+          // (so the limit reveals nothing). 5 tries per address and 30 per IP in 15 minutes, then locked until the window ends.
+          if (inner.path === '/sign-in/email') {
+            const email = String((inner.body as { email?: string } | undefined)?.email ?? '').trim().toLowerCase();
+            // nginx always overwrites X-Real-IP with the real client address; X-Forwarded-For's first entry can be faked by the client.
+            const ip = inner.request?.headers.get('x-real-ip')?.trim() || inner.request?.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+            const okEmail = await redis.rateLimit(`pwd:email:${email}`, 5, 900);
+            const okIp = await redis.rateLimit(`pwd:ip:${ip}`, 30, 900);
+            if (!okEmail || !okIp) throw new APIError('TOO_MANY_REQUESTS', { message: 'Too many sign-in attempts. Wait 15 minutes and try again.' });
+          }
+          if (inner.path === '/change-password') {
+            const b = (inner.body ?? {}) as { newPassword?: string; currentPassword?: string };
+            const problem = passwordProblem(b.newPassword ?? '', b.currentPassword);
+            if (problem) throw new APIError('BAD_REQUEST', { message: problem });
+          }
           // Phone OTP verification must never create users (invite-only).
           if (inner.path === '/phone-number/verify') {
             const phone = (inner.body as { phoneNumber?: string } | undefined)?.phoneNumber;
@@ -306,6 +337,24 @@ export function createAuth(deps: AuthDeps) {
           }
         }),
         after: createAuthMiddleware(async (inner) => {
+          // A new password chosen: the temporary-password flag is cleared and the change is audited.
+          if (inner.path === '/change-password' && !(inner.context.returned instanceof APIError)) {
+            const who = inner.context.session?.user;
+            if (who) {
+              await db.db.update(s.user).set({ mustChangePassword: false }).where(eq(s.user.id, who.id));
+              await db.db.insert(s.auditLog).values({
+                actorUserId: who.id,
+                actorName: who.name,
+                action: 'Password changed',
+                actionKind: 'update',
+                entityType: 'user',
+                entityId: who.id,
+                entityLabel: who.name,
+                summary: 'chose a new password',
+                ip: inner.request?.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null,
+              });
+            }
+          }
           // Never reveal whether an email has an account: unknown addresses get the same reply.
           if (inner.path === '/sign-in/magic-link') {
             const returned = inner.context.returned as { body?: { code?: string }; status?: string } | undefined;

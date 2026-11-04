@@ -22,6 +22,13 @@
       "when": 1793081279260,
       "tag": "0002_certifying_body",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793774338359,
+      "tag": "0003_must_change_password",
+      "breakpoints": true
     }
   ]
 }

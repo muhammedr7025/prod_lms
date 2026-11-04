@@ -37,6 +37,7 @@ export interface UserInfo {
   kind: 'staff' | 'student' | 'guardian';
   status: string;
   twoFactorEnabled: boolean;
+  mustChangePassword?: boolean;
 }
 
 declare module 'fastify' {
@@ -69,6 +70,11 @@ export class AuthGuard implements CanActivate {
     const session = result.session as unknown as SessionInfo;
     const user = result.user as unknown as UserInfo;
     if (user.status === 'deactivated') throw unauthenticated('This account has been deactivated');
+    // A temporary password was set by an administrator: nothing works until the person chooses their own.
+    // (Endpoints marked @Allow2faPending — /api/me and the 2FA steps — stay reachable so the web app can send them there.)
+    if (user.mustChangePassword && !session.impersonatedBy && !this.reflector.getAllAndOverride<boolean>(ALLOW_2FA_PENDING, targets)) {
+      throw new DomainError('PASSWORD_CHANGE_REQUIRED', 'Choose a new password to continue', 403);
+    }
 
     const institution = await this.access.institution();
     const security = institution.settings.security;

@@ -13,6 +13,7 @@ test.describe('shell & identity', () => {
 
   test('magic link request never reveals whether an account exists', async ({ page }) => {
     await page.goto('/sign-in');
+    await page.getByRole('radio', { name: 'Email magic link' }).click();
     await page.getByLabel('Email').fill('nobody@example.com');
     await page.getByRole('button', { name: 'Send sign-in link' }).click();
     await expect(page.getByText('Check your email')).toBeVisible();

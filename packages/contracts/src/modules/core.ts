@@ -42,6 +42,8 @@ export const zMe = z.object({
   readOnly: z.boolean(),
   /** Enrolment in 2FA is mandatory for this role and not done yet. */
   needs2faEnrollment: z.boolean(),
+  /** An administrator set a temporary password: choosing a new one is required before anything else. */
+  mustChangePassword: z.boolean(),
   session: z.object({ idleTimeoutMin: z.number().nullable(), twoFactor: z.boolean() }),
   demoMode: z.boolean(),
 });
@@ -56,6 +58,8 @@ export const coreContract = {
 /** Better Auth endpoints (served under /api/auth) used by the web app. */
 export const AUTH_PATHS = {
   magicLink: '/api/auth/sign-in/magic-link',
+  password: '/api/auth/sign-in/email',
+  changePassword: '/api/auth/change-password',
   sendOtp: '/api/auth/phone-number/send-otp',
   verifyOtp: '/api/auth/phone-number/verify',
   google: '/api/auth/sign-in/social',

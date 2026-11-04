@@ -96,6 +96,7 @@ export class MeController {
       impersonation,
       readOnly: session.readOnly,
       needs2faEnrollment: requires2fa && !user.twoFactorEnabled && !session.twoFactorVerified,
+      mustChangePassword: !!(user as { mustChangePassword?: boolean }).mustChangePassword,
       session: {
         idleTimeoutMin: user.kind === 'staff' && !session.impersonatedBy ? institution.settings.security.staffIdleMinutes : null,
         twoFactor: !!user.twoFactorEnabled || session.authMethod === 'demo',

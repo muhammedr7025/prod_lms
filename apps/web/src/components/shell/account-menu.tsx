@@ -71,6 +71,11 @@ export function AccountMenu() {
         ))}
         <div className="border-t border-divider mt-1.5 pt-1.5 grid">
           {me.user.kind === 'staff' && (
+            <a href="/security/password" className="px-2 py-2 text-[13px] text-ink no-underline hover:bg-accent-100">
+              Change password
+            </a>
+          )}
+          {me.user.kind === 'staff' && (
             <a href="/security/2fa" className="px-2 py-2 text-[13px] text-ink no-underline hover:bg-accent-100">
               Two-factor authentication · {me.user.twoFactorEnabled ? 'on' : 'off'}
             </a>

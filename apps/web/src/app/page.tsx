@@ -9,6 +9,7 @@ export default async function Home() {
     if (error?.code === 'TWO_FACTOR_REQUIRED' || error?.code === 'TWO_FACTOR_ENROLLMENT_REQUIRED') redirect('/security/2fa');
     redirect('/sign-in');
   }
+  if (me.mustChangePassword) redirect('/security/password?forced=1');
   if (me.needs2faEnrollment) redirect('/security/2fa?setup=1');
   redirect(homePath(me));
 }

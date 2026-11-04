@@ -5,7 +5,7 @@ import path from 'node:path';
 
 const ROOT = path.resolve(__dirname, '../../..');
 
-function apiEnv(): Record<string, string> {
+export function apiEnv(): Record<string, string> {
   const out: Record<string, string> = {};
   const file = path.join(ROOT, 'apps/api/.env');
   if (fs.existsSync(file)) {

@@ -14,6 +14,8 @@ export const user = pgTable(
     phoneNumber: text().unique(),
     phoneNumberVerified: boolean().default(false),
     twoFactorEnabled: boolean().default(false),
+    /** Set when an administrator gave this account a temporary password: the next sign-in must choose a new one. */
+    mustChangePassword: boolean().default(false).notNull(),
     /** staff | student | guardian */
     kind: text({ enum: ['staff', 'student', 'guardian'] }).default('staff').notNull(),
     /** invite-only: users are created as invited and become active on first sign-in */

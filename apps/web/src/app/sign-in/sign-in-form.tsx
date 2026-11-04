@@ -6,7 +6,7 @@ import { Button, Field, Icon, Input, Kicker, Seg } from '@exatech/ui';
 import { useEffect, useState } from 'react';
 import { authPost, callApi } from '@/lib/api';
 
-type Mode = 'email' | 'phone';
+type Mode = 'password' | 'email' | 'phone';
 type Step = 'enter' | 'sent' | 'code';
 
 const REASONS: Record<string, string> = {
@@ -19,10 +19,11 @@ function safeNext(next: string): string {
 }
 
 export function SignInForm({ next, reason, email = '', googleEnabled, demoMode, apiDown }: { next: string; reason: string | null; email?: string; googleEnabled: boolean; demoMode: boolean; apiDown: boolean }) {
-  const [mode, setMode] = useState<Mode>('email');
+  const [mode, setMode] = useState<Mode>('password');
   const [step, setStep] = useState<Step>('enter');
   const [value, setValue] = useState(email);
   const [code, setCode] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [accounts, setAccounts] = useState<{ email: string; label: string; name: string; scope: string }[]>([]);
@@ -32,8 +33,24 @@ export function SignInForm({ next, reason, email = '', googleEnabled, demoMode, 
     if (demoMode) callApi(devContract.accounts, {}).then(setAccounts).catch(() => setAccounts([]));
   }, [demoMode]);
 
+  const signInWithPassword = async () => {
+    setError(null);
+    if (!isValidEmail(value)) return setError('Enter the email address your institute registered');
+    if (!password) return setError('Enter your password');
+    setBusy(true);
+    try {
+      await authPost(AUTH_PATHS.password, { email: value.trim().toLowerCase(), password });
+      window.location.assign(target);
+    } catch (e) {
+      setError((e as Error).message);
+      setPassword('');
+      setBusy(false);
+    }
+  };
+
   const send = async () => {
     setError(null);
+    if (mode === 'password') return signInWithPassword();
     if (mode === 'email') {
       if (!isValidEmail(value)) return setError('Enter the email address your institute registered');
       setBusy(true);
@@ -128,8 +145,10 @@ export function SignInForm({ next, reason, email = '', googleEnabled, demoMode, 
               setMode(m);
               setError(null);
               setValue('');
+              setPassword('');
             }}
             options={[
+              { value: 'password', label: 'Password' },
               { value: 'email', label: 'Email magic link' },
               { value: 'phone', label: 'Phone OTP' },
             ]}
@@ -141,19 +160,24 @@ export function SignInForm({ next, reason, email = '', googleEnabled, demoMode, 
               void send();
             }}
           >
-            <Field label={mode === 'email' ? 'Email' : 'Phone'} error={error}>
+            <Field label={mode === 'phone' ? 'Phone' : 'Email'} error={mode === 'password' ? undefined : error}>
               <Input
                 autoFocus
-                inputMode={mode === 'email' ? 'email' : 'tel'}
-                autoComplete={mode === 'email' ? 'email' : 'tel'}
-                placeholder={mode === 'email' ? 'you@example.com' : '+91 98••• ••210'}
+                inputMode={mode === 'phone' ? 'tel' : 'email'}
+                autoComplete={mode === 'phone' ? 'tel' : mode === 'password' ? 'username' : 'email'}
+                placeholder={mode === 'phone' ? '+91 98••• ••210' : 'you@example.com'}
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
                 invalid={!!error}
               />
             </Field>
+            {mode === 'password' && (
+              <Field label="Password" error={error}>
+                <Input type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} invalid={!!error} />
+              </Field>
+            )}
             <Button type="submit" variant="primary" blueprint className="h-10" loading={busy}>
-              {mode === 'email' ? 'Send sign-in link' : 'Send code'}
+              {mode === 'password' ? 'Sign in' : mode === 'email' ? 'Send sign-in link' : 'Send code'}
             </Button>
           </form>
         </>

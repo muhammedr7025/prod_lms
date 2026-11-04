@@ -22,6 +22,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     const reason = error?.code === 'SESSION_IDLE' ? 'idle' : error?.code === 'SESSION_EXPIRED' ? 'expired' : 'signin';
     redirect(`/sign-in?reason=${reason}&next=${encodeURIComponent(pathname)}`);
   }
+  if (me.mustChangePassword) redirect(`/security/password?forced=1&next=${encodeURIComponent(pathname)}`);
   if (me.needs2faEnrollment) redirect(`/security/2fa?setup=1&next=${encodeURIComponent(pathname)}`);
 
   const screen = screenForPath(pathname);
