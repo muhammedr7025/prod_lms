@@ -194,6 +194,12 @@ export class StudentsController {
     return this.students.detail(params.id);
   }
 
+  @Endpoint(academicsStudentsContract.setPassword)
+  @Can('academics:students.manage')
+  setStudentPassword(@Input() { params, body }: Args<typeof academicsStudentsContract.setPassword>) {
+    return this.students.setPassword(params.id, body.password, body.mustChange);
+  }
+
   @Endpoint(academicsStudentsContract.update)
   @Can('academics:students.manage')
   updateStudent(@Input() { params, body }: Args<typeof academicsStudentsContract.update>) {

@@ -20,9 +20,11 @@ import {
   transferAdjustment,
   weekday,
 } from '@exatech/domain';
+import { hashPassword } from 'better-auth/crypto';
 import crypto from 'node:crypto';
 import type { z } from 'zod';
 import { AuditService } from '../../core/audit/audit.service';
+import { passwordProblem, temporaryPasswordProblem } from '../../core/auth/auth.service';
 import { assertBranchAccess, assertInScope, branchScope, ctx } from '../../core/context';
 import { Db } from '../../core/db';
 import { conflict, invalid, notFound } from '../../core/errors';
@@ -711,6 +713,40 @@ export class StudentsService {
       }
     });
     return { detail: await this.detail(id), notices };
+  }
+
+  /**
+   * Admin gives a student a password (initial or reset). By default it is temporary: the student must choose
+   * their own at the next sign-in. Signs the student out everywhere. The password is hashed here and never
+   * returned, logged or audited.
+   */
+  async setPassword(id: string, password: string, mustChange: boolean): Promise<{ signInWith: string[]; mustChange: boolean }> {
+    const problem = mustChange ? temporaryPasswordProblem(password) : passwordProblem(password);
+    if (problem) throw invalid(problem, { password: problem });
+    const hash = await hashPassword(password);
+    return this.db.tx(async (tx) => {
+      const [st] = await tx.select().from(s.student).where(eq(s.student.id, id)).for('update');
+      if (!st) throw notFound('Student');
+      assertInScope(st.branchId);
+      if (!st.userId) throw invalid('This student has no sign-in account yet');
+      const [u] = await tx.select().from(s.user).where(eq(s.user.id, st.userId));
+      if (!u || u.status === 'deactivated') throw invalid('This student’s account is deactivated');
+      const [acc] = await tx.select({ id: s.account.id }).from(s.account).where(and(eq(s.account.userId, u.id), eq(s.account.providerId, 'credential')));
+      if (acc) await tx.update(s.account).set({ password: hash, updatedAt: new Date() }).where(eq(s.account.id, acc.id));
+      else await tx.insert(s.account).values({ userId: u.id, accountId: u.id, providerId: 'credential', password: hash });
+      await tx.update(s.user).set({ mustChangePassword: mustChange }).where(eq(s.user.id, u.id));
+      await tx.delete(s.session).where(eq(s.session.userId, u.id));
+      await this.audit.log(tx, {
+        action: 'Student password set by admin',
+        kind: 'update',
+        entityType: 'student',
+        entityId: id,
+        entityLabel: `${st.name} · ${st.admissionNo ?? ''}`,
+        summary: mustChange ? 'temporary password · must be changed at next sign-in · signed out everywhere' : 'password set (may be kept) · signed out everywhere',
+        branchId: st.branchId,
+      });
+      return { signInWith: [u.phoneNumber ? formatPhone(u.phoneNumber) : null, st.admissionNo].filter((x): x is string => !!x), mustChange };
+    });
   }
 
   async reissueCard(id: string): Promise<void> {

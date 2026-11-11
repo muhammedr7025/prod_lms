@@ -11,6 +11,7 @@ import { useCan } from '@/components/me-context';
 import { authPost, type ApiError } from '@/lib/api';
 import { useApi, useApiMutation } from '@/lib/hooks';
 import { EditStudentDialog } from './components/edit-dialog';
+import { SetPasswordDialog } from './components/password-dialog';
 import { TransferDialog } from './components/transfer-dialog';
 
 function Kpi({ label, value, meta, ink }: { label: string; value: ReactNode; meta?: ReactNode; ink?: boolean }) {
@@ -33,6 +34,7 @@ export default function StudentDrawer({ id }: { id: string }) {
   const canImpersonate = useCan('institution:impersonate');
   const [transferOpen, setTransferOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [pwOpen, setPwOpen] = useState(false);
   const [viewAs, setViewAs] = useState(false);
   const [reason, setReason] = useState('');
   const [starting, setStarting] = useState(false);
@@ -82,6 +84,11 @@ export default function StudentDrawer({ id }: { id: string }) {
         {canManage && (
           <Button variant="secondary" onClick={() => setEditOpen(true)}>
             Edit details
+          </Button>
+        )}
+        {canManage && data.userId && (
+          <Button variant="secondary" onClick={() => setPwOpen(true)}>
+            Set password
           </Button>
         )}
         {canManage && (
@@ -204,6 +211,7 @@ export default function StudentDrawer({ id }: { id: string }) {
 
       {canManage && <TransferDialog student={data} open={transferOpen} onClose={() => setTransferOpen(false)} />}
       {canManage && <EditStudentDialog student={data} open={editOpen} onClose={() => setEditOpen(false)} />}
+      {canManage && <SetPasswordDialog student={data} open={pwOpen} onClose={() => setPwOpen(false)} />}
       <Dialog
         open={viewAs}
         onOpenChange={setViewAs}

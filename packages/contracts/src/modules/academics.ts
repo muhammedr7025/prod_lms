@@ -513,6 +513,16 @@ export const academicsStudentsContract = {
     response: zPage(zAcadStudentRow).extend({ total: z.number().int(), activeTotal: z.number().int(), branchLabel: z.string(), batches: z.array(z.object({ id: zId, code: z.string() })) }),
   }),
   get: route({ method: 'GET', path: '/api/academics/students/:id', response: zAcadStudentDetail }),
+  /**
+   * Admin sets (or resets) the student's password. `mustChange`: the student has to choose their own at the next
+   * sign-in (the default). The password is never returned or logged; `signInWith` lists what the student types as username.
+   */
+  setPassword: route({
+    method: 'POST',
+    path: '/api/academics/students/:id/password',
+    body: z.object({ password: z.string().min(8, 'Use at least 8 characters').max(128), mustChange: z.boolean().default(true) }),
+    response: z.object({ signInWith: z.array(z.string()), mustChange: z.boolean() }),
+  }),
   /** Correct a student's details. `notices` explains anything that could not be applied in full (e.g. a mobile number already used for another sign-in). */
   update: route({
     method: 'PUT',

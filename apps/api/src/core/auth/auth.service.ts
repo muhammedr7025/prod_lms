@@ -6,6 +6,7 @@ import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { APIError, createAuthEndpoint, createAuthMiddleware, getSessionFromCtx } from 'better-auth/api';
 import { setSessionCookie } from 'better-auth/cookies';
+import { hashPassword, verifyPassword } from 'better-auth/crypto';
 import { magicLink, phoneNumber } from 'better-auth/plugins';
 import { z } from 'zod';
 import { env } from '../../config/env';
@@ -35,6 +36,16 @@ export function passwordProblem(next: string, current?: string): string | null {
   return null;
 }
 
+/** Admin-set initial passwords are temporary (the person must replace them), so the rule is lighter: 8+ characters, letters and numbers. */
+export function temporaryPasswordProblem(next: string): string | null {
+  if (next.length < 8) return 'Use at least 8 characters';
+  if (next.length > 128) return 'Use at most 128 characters';
+  if (!/[A-Za-z]/.test(next) || !/\d/.test(next)) return 'Use both letters and numbers';
+  return null;
+}
+
+export const SIGN_IN_FAILED = 'The sign-in details or the password are not right';
+
 export interface AuthDeps {
   db: Db;
   redis: RedisService;
@@ -54,9 +65,56 @@ export function createAuth(deps: AuthDeps) {
     const findUserByPhone = async (phone: string) =>
       (await db.db.select({ id: s.user.id, status: s.user.status }).from(s.user).where(eq(s.user.phoneNumber, phone)).limit(1))[0];
 
+    // Compared against when the account does not exist, so a missing account takes as long as a wrong password.
+    let dummyHash: Promise<string> | null = null;
+
+    /** Who is signing in: an email, a mobile number, or a student's admission number. */
+    const resolveLoginUser = async (identifier: string) => {
+      const id = identifier.trim();
+      const cols = { id: s.user.id, status: s.user.status };
+      if (id.includes('@')) return (await db.db.select(cols).from(s.user).where(sql`lower(${s.user.email}) = ${id.toLowerCase()}`).limit(1))[0];
+      const phone = normalizePhone(id);
+      if (phone) {
+        const byPhone = await findUserByPhone(phone);
+        if (byPhone) return byPhone;
+      }
+      const [st] = await db.db.select({ userId: s.student.userId }).from(s.student).where(sql`lower(${s.student.admissionNo}) = ${id.toLowerCase()}`).limit(1);
+      return st?.userId ? (await db.db.select(cols).from(s.user).where(eq(s.user.id, st.userId)).limit(1))[0] : undefined;
+    };
+
     const exaPlugin = {
       id: 'exa',
       endpoints: {
+        /**
+         * Password sign-in for everyone with a password (staff, students, parents): the identifier is an email,
+         * a mobile number or an admission number. Wrong guesses are limited per identifier and per IP, and the
+         * reply never says which part was wrong or whether the account exists.
+         */
+        exaPasswordLogin: createAuthEndpoint(
+          '/exa/password-login',
+          { method: 'POST', body: z.object({ identifier: z.string().trim().min(3).max(120), password: z.string().min(1).max(128) }) },
+          async (ctx) => {
+            const key = ctx.body.identifier.trim().toLowerCase();
+            // nginx always overwrites X-Real-IP with the real client address; X-Forwarded-For's first entry can be faked.
+            const ip = ctx.request?.headers.get('x-real-ip')?.trim() || ctx.request?.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+            const okKey = await redis.rateLimit(`pwd:email:${key}`, 5, 900);
+            const okIp = await redis.rateLimit(`pwd:ip:${ip}`, 30, 900);
+            if (!okKey || !okIp) throw new APIError('TOO_MANY_REQUESTS', { message: 'Too many sign-in attempts. Wait 15 minutes and try again.' });
+            const user = await resolveLoginUser(ctx.body.identifier);
+            const [account] = user
+              ? await db.db.select({ password: s.account.password }).from(s.account).where(and(eq(s.account.userId, user.id), eq(s.account.providerId, 'credential'))).limit(1)
+              : [];
+            const hash = account?.password ?? (await (dummyHash ??= hashPassword('not-a-real-password-for-timing')));
+            const ok = await verifyPassword({ hash, password: ctx.body.password });
+            if (!user || !account?.password || !ok || user.status === 'deactivated') throw new APIError('UNAUTHORIZED', { code: 'INVALID_EMAIL_OR_PASSWORD', message: SIGN_IN_FAILED });
+            const found = await ctx.context.internalAdapter.findUserById(user.id);
+            if (!found) throw new APIError('UNAUTHORIZED', { code: 'INVALID_EMAIL_OR_PASSWORD', message: SIGN_IN_FAILED });
+            const session = await ctx.context.internalAdapter.createSession(user.id, ctx, false, { authMethod: 'password' });
+            if (!session) throw new APIError('INTERNAL_SERVER_ERROR');
+            await setSessionCookie(ctx, { session, user: found });
+            return ctx.json({ ok: true });
+          },
+        ),
         /** DEMO_MODE only: sign in as a seeded persona (the prototype's "open as"). */
         exaDemoLogin: createAuthEndpoint('/exa/demo-login', { method: 'POST', body: z.object({ email: z.string().email() }) }, async (ctx) => {
           if (!env().DEMO_MODE) throw new APIError('NOT_FOUND');

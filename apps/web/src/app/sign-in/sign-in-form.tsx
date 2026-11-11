@@ -35,11 +35,11 @@ export function SignInForm({ next, reason, email = '', googleEnabled, demoMode, 
 
   const signInWithPassword = async () => {
     setError(null);
-    if (!isValidEmail(value)) return setError('Enter the email address your institute registered');
+    if (value.trim().length < 3) return setError('Enter your email, mobile number or admission number');
     if (!password) return setError('Enter your password');
     setBusy(true);
     try {
-      await authPost(AUTH_PATHS.password, { email: value.trim().toLowerCase(), password });
+      await authPost(AUTH_PATHS.passwordLogin, { identifier: value.trim(), password });
       window.location.assign(target);
     } catch (e) {
       setError((e as Error).message);
@@ -160,12 +160,12 @@ export function SignInForm({ next, reason, email = '', googleEnabled, demoMode, 
               void send();
             }}
           >
-            <Field label={mode === 'phone' ? 'Phone' : 'Email'} error={mode === 'password' ? undefined : error}>
+            <Field label={mode === 'phone' ? 'Phone' : mode === 'password' ? 'Email, mobile or admission no.' : 'Email'} error={mode === 'password' ? undefined : error}>
               <Input
                 autoFocus
-                inputMode={mode === 'phone' ? 'tel' : 'email'}
+                inputMode={mode === 'phone' ? 'tel' : mode === 'password' ? 'text' : 'email'}
                 autoComplete={mode === 'phone' ? 'tel' : mode === 'password' ? 'username' : 'email'}
-                placeholder={mode === 'phone' ? '+91 98••• ••210' : 'you@example.com'}
+                placeholder={mode === 'phone' ? '+91 98••• ••210' : mode === 'password' ? 'you@example.com · 98470 11223 · ELHS2026002' : 'you@example.com'}
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
                 invalid={!!error}

@@ -59,6 +59,7 @@ export const coreContract = {
 export const AUTH_PATHS = {
   magicLink: '/api/auth/sign-in/magic-link',
   password: '/api/auth/sign-in/email',
+  passwordLogin: '/api/auth/exa/password-login',
   changePassword: '/api/auth/change-password',
   sendOtp: '/api/auth/phone-number/send-otp',
   verifyOtp: '/api/auth/phone-number/verify',
