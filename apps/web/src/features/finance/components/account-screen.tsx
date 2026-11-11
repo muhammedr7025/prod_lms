@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 import { useCan } from '@/components/me-context';
 import { useApi, useApiMutation } from '@/lib/hooks';
 import { openDoc, toPaise, toRupeeInput } from '../lib';
+import { DiscountDialog } from './discount-dialog';
 
 interface DraftRow {
   label: string;
@@ -223,7 +224,7 @@ export function AccountScreen({ enrollmentId }: { enrollmentId: string }) {
   const canExempt = useCan('finance:exemption.grant');
   const canDues = useCan('finance:dues.manage');
   const canCollect = useCan('finance:payment.collect');
-  const [dlg, setDlg] = useState<'restructure' | 'exempt' | 'call' | 'refund' | null>(null);
+  const [dlg, setDlg] = useState<'restructure' | 'exempt' | 'call' | 'refund' | 'discount' | null>(null);
   const [link, setLink] = useState<{ url: string; description: string } | null>(null);
   const remind = useApiMutation(financeContract.remindAccount, { invalidate: [['finance']], success: 'Reminder sent · WhatsApp + email with the invoice PDF' });
   const payLink = useApiMutation(financeContract.paymentLink, {
@@ -261,6 +262,7 @@ export function AccountScreen({ enrollmentId }: { enrollmentId: string }) {
         actions={
           <>
             <Button onClick={() => openDoc(DOCUMENT_PATHS.statement(acc.enrollmentId))}>Statement of account</Button>
+            {acc.discounts.canGrant && <Button onClick={() => setDlg('discount')}>Give a discount</Button>}
             {canRestructure && <Button onClick={() => setDlg('restructure')}>{acc.hasSchedule ? 'Restructure balance' : 'Set up fee schedule'}</Button>}
             {canCollect && (
               <Link href={`/finance/desk?student=${acc.studentId}`}>
@@ -338,6 +340,48 @@ export function AccountScreen({ enrollmentId }: { enrollmentId: string }) {
         {acc.ledger.length === 0 && <EmptyState title="No entries yet" body="Charges post when invoices are issued; payments, credit notes and reversals follow." />}
       </Card>
 
+      <Card className="gap-2" data-testid="discounts-card">
+        <div className="flex justify-between items-center gap-2 flex-wrap">
+          <CardTitle>Discounts &amp; scholarships</CardTitle>
+          {acc.discounts.canGrant && (
+            <Button size="sm" onClick={() => setDlg('discount')}>
+              Give a discount
+            </Button>
+          )}
+        </div>
+        {acc.discounts.pctBelowList > 0 && (
+          <div className="text-[13px] text-neutral-700">
+            Fee {formatINR(acc.feeTotal)} is <b className="font-medium">{acc.discounts.pctBelowList}% below</b> the list price of {formatINR(acc.discounts.listTotal)}.
+          </div>
+        )}
+        {acc.discounts.history.length === 0 ? (
+          <div className="text-[13px] text-neutral-600">No discount recorded on this account{acc.discounts.pctBelowList > 0 ? ' — the reduction above came without a recorded reason.' : '.'}</div>
+        ) : (
+          <div className="grid gap-0">
+            {acc.discounts.history.map((x) => (
+              <div key={x.id} className="grid gap-0.5 py-2 border-t border-divider first:border-t-0 text-[13px]" data-testid="discount-row">
+                <div className="flex justify-between gap-2 flex-wrap items-center">
+                  <span className="flex items-center gap-1.5">
+                    <Tag variant="outline" size="sm">
+                      {x.kindLabel}
+                    </Tag>
+                    <b className="font-medium tabular">− {formatINR(x.amount)}</b>
+                    <span className="text-neutral-600">({x.pctAfter}% below list in total)</span>
+                  </span>
+                  <span className="text-[11px] text-neutral-500">
+                    {formatDayMonth(x.grantedAt.slice(0, 10))} · {x.origin === 'admission' ? 'at admission' : x.origin === 'import' ? 'from the go-live records' : x.grantedByName ?? ''}
+                  </span>
+                </div>
+                <div className="text-neutral-700">
+                  {x.reason}
+                  {x.sourceLabel && x.sourceName ? ` · ${x.sourceLabel}: ${x.sourceName}` : ''}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
       <Grid min={300}>
         <Card className="gap-2">
           <CardTitle>Instalment schedule · revision {acc.revision}</CardTitle>
@@ -412,6 +456,7 @@ export function AccountScreen({ enrollmentId }: { enrollmentId: string }) {
       <ExemptionDialog acc={acc} open={dlg === 'exempt'} onClose={() => setDlg(null)} />
       <CallDialog enrollmentId={acc.enrollmentId} name={acc.studentName} open={dlg === 'call'} onClose={() => setDlg(null)} />
       <RefundDialog acc={acc} open={dlg === 'refund'} onClose={() => setDlg(null)} />
+      <DiscountDialog acc={acc} open={dlg === 'discount'} onClose={() => setDlg(null)} />
       <Dialog open={!!link} onOpenChange={(o) => !o && setLink(null)} kicker="Payment link · copied" title={link?.description ?? ''} description="Share it with the student or parent — it opens the portal checkout for this amount. Logged in the follow-up." footer={<Button variant="primary" onClick={() => setLink(null)}>Done</Button>}>
         <Input readOnly value={link?.url ?? ''} onFocus={(e) => e.currentTarget.select()} aria-label="Payment link" />
       </Dialog>

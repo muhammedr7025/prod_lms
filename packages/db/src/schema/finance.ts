@@ -6,6 +6,33 @@ import { createdAt, money, pk, tsz, updatedAt } from './_helpers';
  * never deleted. Corrections are reversals with a reason.
  */
 
+/**
+ * Every reduction of a student's fee, with why it was given. Applied discounts only (a request waiting
+ * for approval lives in approval_request until it is decided).
+ */
+export const feeDiscount = pgTable(
+  'fee_discount',
+  {
+    id: pk(),
+    enrollmentId: uuid().notNull(),
+    branchId: uuid().notNull(),
+    kind: text({ enum: ['referral', 'special', 'scholarship', 'other'] }).notNull(),
+    amount: money().notNull(),
+    /** How far below the list price the fee was after this discount (cumulative, percent). */
+    pctAfter: numeric({ mode: 'number' }).default(0).notNull(),
+    reason: text().notNull(),
+    /** Referred by / funded by / approved by — what it means depends on the kind. */
+    sourceName: text(),
+    /** admission = decided with the admission; adjustment = given later on the fee account; import = from the go-live records. */
+    origin: text({ enum: ['admission', 'adjustment', 'import'] }).notNull(),
+    approvalId: uuid(),
+    grantedBy: uuid(),
+    grantedAt: tsz().defaultNow().notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [index().on(t.enrollmentId), index().on(t.branchId, t.grantedAt)],
+);
+
 export const instalment = pgTable(
   'instalment',
   {

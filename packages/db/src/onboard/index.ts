@@ -226,6 +226,13 @@ export async function onboard(file: string, url = process.env.DATABASE_URL): Pro
         feePlanId: course.planId, feePlanName: 'Standard', feeTotal: net + reg, discountPct,
         awardingBody: st.body, bodyRegNo: st.bodyRegNo, bodyFee: st.bodyFee != null ? rupees(st.bodyFee) : null, bodyFeeSubmittedOn: st.bodyFeeSubmittedOn,
       });
+      if (st.fee > st.net) {
+        // A reduction already in the institute's records: kept as a recorded discount (the reason was not written down).
+        await db.insert(s.feeDiscount).values({
+          enrollmentId, branchId, kind: 'other', amount: rupees(st.fee - st.net), pctAfter: discountPct,
+          reason: 'From the institute’s records — reason not recorded', origin: 'import',
+        });
+      }
       const insts: { id: string; seq: number; label: string; dueDate: string; amount: number; paid: number; payDate: string | null; mode: 'cash' | 'transfer' }[] = [];
       if (reg > 0) insts.push({ id: id(), seq: 0, label: 'Registration fee', dueDate: st.regFeeDate ?? st.joinedOn, amount: reg, paid: reg, payDate: st.regFeeDate ?? st.joinedOn, mode: 'cash' });
       if (paid > 0) insts.push({ id: id(), seq: 0, label: 'Course fee · paid at admission', dueDate: st.payDate ?? st.joinedOn, amount: paid, paid, payDate: st.payDate ?? st.joinedOn, mode: st.payMode });

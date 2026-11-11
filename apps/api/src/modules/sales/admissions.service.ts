@@ -7,6 +7,7 @@ import {
   DEFAULT_DISCOUNT_THRESHOLDS,
   DEFAULT_PATTERNS,
   discountApprovalLevel,
+  DISCOUNT_KIND_LABEL,
   formatDate,
   formatINR,
   formatNumber,
@@ -192,6 +193,8 @@ export class AdmissionsService implements OnModuleInit {
         total,
         discountPct: a.discountPct,
         discountAmount: quote?.discount ?? 0,
+        discountKind: a.discountPct > 0 ? a.discountKind : null,
+        discountKindLabel: a.discountPct > 0 && a.discountKind ? DISCOUNT_KIND_LABEL[a.discountKind] : null,
         needsSuperAdmin,
         financeVerified,
         superAdminApproved,
@@ -275,6 +278,7 @@ export class AdmissionsService implements OnModuleInit {
       guardianEmail: a!.guardianEmail,
       feePlanId: a!.feePlanId,
       discountReason: a!.discountReason,
+      discountSource: a!.discountSource,
       quote: q ? { subtotal: q.subtotal, discount: q.discount, taxable: q.taxable, gst: q.gst, total: q.total, gstRate: q.gstRate } : null,
       consent: a!.consent ? { dpdp: a!.consent.dpdp, purposes: a!.consent.purposes, parental: a!.consent.parental } : null,
       referralCode: a!.referralCode,
@@ -341,6 +345,9 @@ export class AdmissionsService implements OnModuleInit {
         if (minor && !input.consent.parental) throw invalid('The student is under 18 — capture parental consent', { parental: 'Parental consent is required for under-18 learners' });
         if (minor && (!input.guardianName || !guardianPhone)) throw invalid('The student is under 18 — add a guardian with a mobile number', { guardianPhone: 'Required for under-18 learners' });
         if (level !== 'none' && !input.discountReason) throw invalid('Add a reason for the discount request', { discountReason: 'Required above the Finance threshold' });
+        // Every discount says why it is given, so the owner can see where the money goes (referral, scholarship…).
+        if (input.discountPct > 0 && !input.discountKind) throw invalid('Choose why this discount is given', { discountKind: 'Choose referral, special discount, scholarship or other' });
+        if (input.discountPct > 0 && input.discountKind === 'referral' && !input.discountSource?.trim()) throw invalid('Say who referred this student', { discountSource: 'Required for a referral' });
         if (seatsLeft <= 0 && !input.waitlist) throw invalid(`${batch.code} is full — choose another batch or join the waitlist`, { batchId: 'No seats left' });
       }
       const now = new Date();
@@ -361,6 +368,8 @@ export class AdmissionsService implements OnModuleInit {
         feePlanId: plan.id,
         discountPct: input.discountPct,
         discountReason: input.discountReason ?? null,
+        discountKind: input.discountPct > 0 ? (input.discountKind ?? null) : null,
+        discountSource: input.discountPct > 0 ? input.discountSource?.trim() || null : null,
         quote,
         consent: { ...input.consent, capturedAt: now.toISOString() },
         referralCode: input.referralCode ?? null,
@@ -764,6 +773,26 @@ export class AdmissionsService implements OnModuleInit {
         })
         .returning({ id: s.enrollment.id });
       const enrollmentId = enr!.id;
+
+      // The discount agreed at admission goes on the fee record with its reason, like any later discount.
+      if (a.discountPct > 0) {
+        const listTotal = quoteFee(plan.components, 0, plan.gstRate).total;
+        const discounted = quoteFee(plan.components, a.discountPct, plan.gstRate).total;
+        const kind = a.discountKind ?? 'other';
+        if (listTotal > discounted) {
+          await tx.insert(s.feeDiscount).values({
+            enrollmentId,
+            branchId: a.branchId,
+            kind,
+            amount: listTotal - discounted,
+            pctAfter: a.discountPct,
+            reason: a.discountReason ?? DISCOUNT_KIND_LABEL[kind],
+            sourceName: a.discountSource,
+            origin: 'admission',
+            grantedBy: c.userId,
+          });
+        }
+      }
 
       if (studentUserId) await this.upsertMembership(tx, studentUserId, 'student', a.institutionId, a.branchId, batch.code);
       for (const gu of guardianUserIds) {

@@ -1,7 +1,7 @@
 'use client';
 
 import { admissionsContract, salesContract, type AdmissionDetail, type AdmissionInput, type AdmissionOptions } from '@exatech/contracts';
-import { buildSchedule, discountApprovalLevel, formatINR, formatPhone, isValidEmail, normalizePhone, quoteFee } from '@exatech/domain';
+import { buildSchedule, DISCOUNT_KINDS, DISCOUNT_KIND_LABEL, DISCOUNT_SOURCE_LABEL, discountApprovalLevel, formatINR, formatPhone, isValidEmail, normalizePhone, quoteFee } from '@exatech/domain';
 import { Button, Card, CardButton, CardTitle, Checkbox, cn, EmptyState, Field, Input, Issue, Kicker, Page, PageHeader, Select, Skeleton, Table, Tag, TD, toast } from '@exatech/ui';
 import { useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
@@ -35,6 +35,8 @@ interface Form {
   feePlanId: string;
   discountPct: string;
   discountReason: string;
+  discountKind: string;
+  discountSource: string;
   waitlist: boolean;
   dpdp: boolean;
   parental: boolean;
@@ -64,6 +66,8 @@ const BLANK: Form = {
   feePlanId: '',
   discountPct: '0',
   discountReason: '',
+  discountKind: '',
+  discountSource: '',
   waitlist: false,
   dpdp: false,
   parental: false,
@@ -100,6 +104,8 @@ function fromDetail(a: AdmissionDetail, opts: AdmissionOptions | undefined): For
     feePlanId: a.feePlanId,
     discountPct: String(a.discountPct),
     discountReason: a.discountReason ?? '',
+    discountKind: a.discountKind ?? '',
+    discountSource: a.discountSource ?? '',
     waitlist: a.waitlist,
     dpdp: a.consent?.dpdp ?? false,
     parental: a.consent?.parental ?? false,
@@ -210,6 +216,8 @@ export function AdmissionWizard() {
       feePlanId: f.feePlanId,
       discountPct: pct,
       discountReason: f.discountReason.trim() || null,
+      discountKind: pct > 0 ? ((f.discountKind || null) as AdmissionInput['discountKind']) : null,
+      discountSource: pct > 0 ? f.discountSource.trim() || null : null,
       waitlist: f.waitlist,
       consent: { dpdp: f.dpdp, purposes: f.dpdp ? PURPOSES : [], parental: f.parental },
       referralCode: f.referral ? f.referralCode.trim() || null : null,
@@ -267,6 +275,8 @@ export function AdmissionWizard() {
     if (n === 4) {
       if (!f.feePlanId) return 'Pick a fee plan';
       if (level !== 'none' && !f.discountReason.trim()) return 'Add a reason for the discount request';
+      if (pct > 0 && !f.discountKind) return 'Choose why this discount is given';
+      if (pct > 0 && f.discountKind === 'referral' && !f.discountSource.trim()) return 'Say who referred this student';
     }
     if (n === 5) {
       if (!f.dpdp) return 'Capture DPDP consent before submitting';
@@ -547,8 +557,26 @@ export function AdmissionWizard() {
                     </tbody>
                   </Table>
                 )}
-                {level !== 'none' && (
-                  <Field label="Reason for the discount" error={errors.discountReason}>
+                {pct > 0 && (
+                  <div className="grid sm:grid-cols-2 gap-2.5">
+                    <Field label="Why is this discount given?" error={errors.discountKind}>
+                      <Select
+                        value={f.discountKind}
+                        onChange={(e) => set('discountKind', e.target.value)}
+                        placeholder="Choose…"
+                        disabled={!editable}
+                        options={DISCOUNT_KINDS.map((k) => ({ value: k, label: DISCOUNT_KIND_LABEL[k] }))}
+                      />
+                    </Field>
+                    {f.discountKind && DISCOUNT_SOURCE_LABEL[f.discountKind as (typeof DISCOUNT_KINDS)[number]] && (
+                      <Field label={DISCOUNT_SOURCE_LABEL[f.discountKind as (typeof DISCOUNT_KINDS)[number]]!} error={errors.discountSource}>
+                        <Input value={f.discountSource} onChange={(e) => set('discountSource', e.target.value)} placeholder={f.discountKind === 'referral' ? 'Name or admission no. of the person who referred' : f.discountKind === 'scholarship' ? 'Trust, company or scheme' : 'Who agreed to it'} disabled={!editable} />
+                      </Field>
+                    )}
+                  </div>
+                )}
+                {pct > 0 && (
+                  <Field label={level === 'none' ? 'Reason for the discount (optional)' : 'Reason for the discount'} error={errors.discountReason}>
                     <Input value={f.discountReason} onChange={(e) => set('discountReason', e.target.value)} placeholder="Sibling of alumnus + merit scholarship" disabled={!editable} />
                   </Field>
                 )}

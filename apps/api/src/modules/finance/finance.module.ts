@@ -5,6 +5,7 @@ import type { FastifyInstance } from 'fastify';
 import { Readable } from 'node:stream';
 import { AcademicsModule } from '../academics/academics.module';
 import { AccountsService } from './accounts.service';
+import { DiscountsService } from './discounts.service';
 import { DashboardService } from './dashboard.service';
 import { DayBookService } from './daybook.service';
 import { DeskService } from './desk.service';
@@ -63,6 +64,7 @@ const WEBHOOK_PATHS = new Set([paymentsContract.razorpayWebhookPath, paymentsCon
     FinanceDocuments,
     FinanceMessages,
     AccountsService,
+    DiscountsService,
     DuesService,
     OnlineService,
     DeskService,

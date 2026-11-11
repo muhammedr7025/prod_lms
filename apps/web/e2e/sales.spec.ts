@@ -223,6 +223,8 @@ test.describe.serial('sales & admissions', () => {
     await page.getByLabel('Discount percent').fill('22');
     await expect(page.getByText('Needs Super Admin approval (>20%)')).toBeVisible();
     await page.getByLabel('Reason for the discount').fill('Sibling of alumnus + merit scholarship');
+    await page.getByLabel('Why is this discount given?').selectOption('scholarship');
+    await page.getByLabel('Funded by / awarded by').fill('Merit scholarship — Exatech trust');
     await page.getByRole('button', { name: 'Continue' }).click();
 
     await page.getByLabel('Upload ID proof').setInputFiles({ name: 'aadhaar.pdf', mimeType: 'application/pdf', buffer: PDF });

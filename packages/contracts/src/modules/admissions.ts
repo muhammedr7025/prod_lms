@@ -1,3 +1,4 @@
+import { DISCOUNT_KINDS } from '@exatech/domain';
 import { z } from 'zod';
 import { route, zDate, zId, zInstant, zOk, zPaise } from '../route';
 
@@ -27,6 +28,9 @@ export const zAdmissionRow = z.object({
   total: zPaise,
   discountPct: z.number(),
   discountAmount: zPaise,
+  /** Why the discount is given (referral / special / scholarship / other); null when there is no discount. */
+  discountKind: z.enum(DISCOUNT_KINDS).nullable(),
+  discountKindLabel: z.string().nullable(),
   needsSuperAdmin: z.boolean(),
   financeVerified: z.boolean(),
   superAdminApproved: z.boolean(),
@@ -53,6 +57,8 @@ export const zAdmissionDetail = zAdmissionRow.extend({
   guardianEmail: z.string().nullable(),
   feePlanId: zId,
   discountReason: z.string().nullable(),
+  /** Who referred the student / funds the scholarship / approved the special discount. */
+  discountSource: z.string().nullable(),
   quote: z.object({ subtotal: zPaise, discount: zPaise, taxable: zPaise, gst: zPaise, total: zPaise, gstRate: z.number() }).nullable(),
   consent: z.object({ dpdp: z.boolean(), purposes: z.array(z.string()), parental: z.boolean() }).nullable(),
   referralCode: z.string().nullable(),
@@ -76,6 +82,8 @@ export const zAdmissionInput = z.object({
   feePlanId: zId,
   discountPct: z.number().min(0).max(100).default(0),
   discountReason: z.string().trim().nullable().optional(),
+  discountKind: z.enum(DISCOUNT_KINDS).nullable().optional(),
+  discountSource: z.string().trim().max(120).nullable().optional(),
   waitlist: z.boolean().default(false),
   consent: z.object({ dpdp: z.boolean(), purposes: z.array(z.string()), parental: z.boolean() }),
   referralCode: z.string().trim().nullable().optional(),

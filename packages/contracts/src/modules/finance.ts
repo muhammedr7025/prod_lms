@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { route, zDate, zId, zInstant, zInstantNullable, zOk, zPaise } from '../route';
+import { DISCOUNT_KINDS } from '@exatech/domain';
 import { zOrder } from './payments';
 
 /**
@@ -91,6 +92,34 @@ export const zFollowUpRow = z.object({
   by: z.string().nullable(),
 });
 
+/* ───────────────────────── Discounts (referral, special, scholarship) ───────────────────────── */
+
+export const zDiscountKind = z.enum(DISCOUNT_KINDS);
+
+export const zDiscountRow = z.object({
+  id: zId,
+  kind: zDiscountKind,
+  kindLabel: z.string(),
+  amount: zPaise,
+  /** How far below the list price the fee was after this discount (cumulative %). */
+  pctAfter: z.number(),
+  reason: z.string(),
+  sourceLabel: z.string().nullable(), // "Referred by"
+  sourceName: z.string().nullable(), // "Ajay Nair"
+  grantedByName: z.string().nullable(),
+  grantedAt: zInstant,
+  origin: z.enum(['admission', 'adjustment', 'import']),
+});
+export type DiscountRow = z.output<typeof zDiscountRow>;
+
+export const zDiscountInput = z.object({
+  kind: zDiscountKind,
+  /** The reduction in paise. (The screen converts a percentage into this using the list price it shows.) */
+  amount: zPaise.positive('Enter an amount greater than zero'),
+  reason: z.string().trim().min(5, 'Say why — at least 5 characters').max(300),
+  sourceName: z.string().trim().max(120).nullish(),
+});
+
 export const zFeeAccount = z.object({
   enrollmentId: zId,
   studentId: zId,
@@ -135,6 +164,20 @@ export const zFeeAccount = z.object({
   remindedToday: z.boolean(),
   pendingApprovals: z.array(z.object({ id: zId, kind: z.string(), title: z.string() })),
   restructureApprovalAbove: zPaise,
+  /** Everything the discount dialog and the account's discount history need. */
+  discounts: z.object({
+    /** The course's list price for this student (fee plan incl. GST); never below what is charged. */
+    listTotal: zPaise,
+    /** Unpaid principal a discount can reduce (a discount can never go below what is already paid). */
+    openPrincipal: zPaise,
+    /** How far below the list price the fee already is (cumulative %). */
+    pctBelowList: z.number(),
+    thresholds: z.object({ financePct: z.number(), superAdminPct: z.number() }),
+    /** The most this person may take off in total (as % of list) without a Super Admin's approval; 100 for a Super Admin. */
+    directUpToPct: z.number(),
+    canGrant: z.boolean(),
+    history: z.array(zDiscountRow),
+  }),
   methods: z.array(z.object({ method: zTenderMethod, label: z.string(), referenceLabel: z.string().nullable() })),
   allocationOrder: z.enum(['oldest_first', 'component_priority']),
   upiVpa: z.string().nullable(),
@@ -484,6 +527,30 @@ export const financeContract = {
     method: 'POST',
     path: '/api/finance/accounts/:enrollmentId/payment-link',
     response: z.object({ url: z.string(), amount: zPaise, description: z.string() }),
+  }),
+  /**
+   * Take an amount off a student's unpaid fee (referral, special discount, scholarship…). Finance applies it
+   * directly while the total reduction stays within its limit; above that it goes to the Super Admin.
+   */
+  grantDiscount: route({
+    method: 'POST',
+    path: '/api/finance/accounts/:enrollmentId/discount',
+    body: zDiscountInput,
+    response: z.object({ status: z.enum(['applied', 'approval_requested']), message: z.string(), approvalId: zId.nullable() }),
+  }),
+  /** Every discount given in a period, with totals by kind. */
+  discounts: route({
+    method: 'GET',
+    path: '/api/finance/discounts',
+    query: z.object({ from: zDate.optional(), to: zDate.optional(), kind: zDiscountKind.optional() }),
+    response: z.object({
+      from: zDate,
+      to: zDate,
+      total: zPaise,
+      count: z.number().int(),
+      byKind: z.array(z.object({ kind: zDiscountKind, label: z.string(), count: z.number().int(), amount: zPaise })),
+      rows: z.array(zDiscountRow.extend({ enrollmentId: zId, studentName: z.string(), admissionNo: z.string().nullable(), branchName: z.string(), batchCode: z.string() })),
+    }),
   }),
   requestRefund: route({
     method: 'POST',

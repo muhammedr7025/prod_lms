@@ -79,6 +79,55 @@ export const DEFAULT_DISCOUNT_THRESHOLDS: DiscountThresholds = { financePct: 10,
 
 export type DiscountApproval = 'none' | 'finance' | 'super_admin';
 
+/** Why a fee is reduced. Recorded on every discount so the owner can see where money is going. */
+export const DISCOUNT_KINDS = ['referral', 'special', 'scholarship', 'other'] as const;
+export type DiscountKind = (typeof DISCOUNT_KINDS)[number];
+export const DISCOUNT_KIND_LABEL: Record<DiscountKind, string> = {
+  referral: 'Referral',
+  special: 'Special discount',
+  scholarship: 'Scholarship',
+  other: 'Other',
+};
+/** What the "who" field means for each kind (null: not asked). */
+export const DISCOUNT_SOURCE_LABEL: Record<DiscountKind, string | null> = {
+  referral: 'Referred by',
+  scholarship: 'Funded by / awarded by',
+  special: 'Approved by',
+  other: null,
+};
+
+/**
+ * Split `total` across `weights` in proportion, in whole paise, so the parts add up to exactly `total`
+ * (largest-remainder method) and no part exceeds its weight when total <= sum(weights).
+ */
+export function splitProportionally(total: Paise, weights: Paise[]): Paise[] {
+  const sum = weights.reduce((a, w) => a + w, 0);
+  if (total <= 0 || sum <= 0) return weights.map(() => 0);
+  const capped = Math.min(total, sum);
+  const exact = weights.map((w) => (capped * w) / sum);
+  const parts = exact.map((x) => Math.floor(x));
+  let left = capped - parts.reduce((a, p) => a + p, 0);
+  const order = exact.map((x, i) => ({ i, frac: x - Math.floor(x) })).sort((a, b) => b.frac - a.frac || a.i - b.i);
+  for (const { i } of order) {
+    if (left <= 0) break;
+    if (parts[i]! < weights[i]!) {
+      parts[i]!++;
+      left--;
+    }
+  }
+  return parts;
+}
+
+/**
+ * How far below the list price a fee is, in percent (2 dp). A fee at or above the list price is 0.
+ * This — not the size of one new discount — is what the approval thresholds look at, so a big discount
+ * cannot be split into several small ones to avoid approval.
+ */
+export function cumulativeDiscountPct(listTotal: Paise, feeAfter: Paise): number {
+  if (listTotal <= 0) return 0;
+  return Math.round((Math.max(0, listTotal - feeAfter) / listTotal) * 10000) / 100;
+}
+
 export function discountApprovalLevel(pct: number, t: DiscountThresholds = DEFAULT_DISCOUNT_THRESHOLDS): DiscountApproval {
   if (pct > t.superAdminPct) return 'super_admin';
   if (pct > t.financePct) return 'finance';

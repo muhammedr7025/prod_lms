@@ -8,6 +8,7 @@ import { assertInScope, ctx } from '../../core/context';
 import { Db, inBranchScope } from '../../core/db';
 import { conflict, invalid, notFound } from '../../core/errors';
 import { EventBus } from '../../core/events/event-bus';
+import { DiscountsService } from './discounts.service';
 import { FinanceShared, type InstalmentRowDb } from './finance.shared';
 import { InvoicesService } from './invoices.service';
 import { instalmentState, instalmentStatus, isActive, lateFeeDue, openBalance, principalOpen, suggestedInstalment } from './ledger';
@@ -27,6 +28,7 @@ export class AccountsService {
     private readonly db: Db,
     private readonly shared: FinanceShared,
     private readonly invoices: InvoicesService,
+    private readonly discounts: DiscountsService,
     private readonly events: EventBus,
     private readonly audit: AuditService,
   ) {}
@@ -187,6 +189,7 @@ export class AccountsService {
       remindedToday,
       pendingApprovals: approvals,
       restructureApprovalAbove: fin.restructureApprovalAbove,
+      discounts: await this.discounts.accountBlock(db, c, all),
       methods: (['upi', 'cash', 'card', 'cheque', 'transfer'] as const).filter((m) => fin.methods[m]).map((m) => ({ method: m, label: METHOD_LABEL[m]!, referenceLabel: m === 'cash' ? null : referenceLabel(m) })),
       allocationOrder: fin.allocationOrder,
       upiVpa: fin.upiVpa,

@@ -7,6 +7,7 @@ import { AuditService } from '../../core/audit/audit.service';
 import { EventBus } from '../../core/events/event-bus';
 import { QueueService } from '../../core/queue.service';
 import { AccountsService, type RestructureRow } from './accounts.service';
+import { DiscountsService } from './discounts.service';
 import { DuesService } from './dues.service';
 import { FinanceMessages } from './finance-messages.service';
 import { FinanceShared } from './finance.shared';
@@ -34,6 +35,7 @@ export class FinanceEvents implements OnModuleInit {
     private readonly invoices: InvoicesService,
     private readonly payments: PaymentsService,
     private readonly accounts: AccountsService,
+    private readonly discounts: DiscountsService,
     private readonly dues: DuesService,
     private readonly messages: FinanceMessages,
     private readonly online: OnlineService,
@@ -172,7 +174,7 @@ export class FinanceEvents implements OnModuleInit {
   /* ───────────────────────── Approvals ───────────────────────── */
 
   private async onApprovalDecided(tx: Tx, p: DomainEvents['ApprovalDecided']): Promise<void> {
-    if (!['locked_period', 'refund', 'restructure', 'exemption', 'void', 'waiver'].includes(p.kind)) return;
+    if (!['locked_period', 'refund', 'restructure', 'exemption', 'void', 'waiver', 'discount'].includes(p.kind)) return;
     if (p.status !== 'approved') return; // denied / returned: nothing to apply (the decision is logged by the queue)
     const [a] = await tx.select().from(s.approvalRequest).where(eq(s.approvalRequest.id, p.approvalId));
     if (!a) return;
@@ -198,6 +200,11 @@ export class FinanceEvents implements OnModuleInit {
         return;
       case 'exemption':
         await this.accounts.applyExemption(tx, a.entityId, String(payload.until), String(payload.reason ?? 'Exemption'));
+        return;
+      case 'discount':
+        // Admission discounts (entityType 'admission') are handled by the Admissions module; this is a later fee reduction.
+        if (a.entityType !== 'enrollment') return;
+        await this.discounts.applyApproved(tx, a);
         return;
       case 'waiver':
         await this.accounts.applyWaiver(tx, String(payload.instalmentId ?? a.entityId), Number(payload.amount ?? a.amount ?? 0), String(payload.reason ?? 'Waiver'));

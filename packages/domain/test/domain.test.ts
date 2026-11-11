@@ -10,6 +10,8 @@ import {
   canSubmitMarks,
   computeClearance,
   computeLateFee,
+  cumulativeDiscountPct,
+  splitProportionally,
   discountApprovalLevel,
   evaluateMarkRow,
   examStats,
@@ -277,3 +279,29 @@ describe('sales', () => {
     expect(assignLead({ source: 'Website', courseId: 'dm', preferredBranchId: null }, rules)).toMatchObject({ ruleId: 'r4' });
   });
 });
+
+describe('fee discounts', () => {
+  it('splits a discount across open instalments in whole paise, adding up exactly', () => {
+    expect(splitProportionally(rupees(1000), [rupees(30000), rupees(30000)])).toEqual([rupees(500), rupees(500)]);
+    const parts = splitProportionally(1_000_001, [3, 3, 3].map((x) => x * 1_000_000)); // ₹10,000.01 over three equal instalments
+    expect(parts.reduce((a, p) => a + p, 0)).toBe(1_000_001);
+    expect(Math.max(...parts) - Math.min(...parts)).toBeLessThanOrEqual(1);
+  });
+  it('never gives an instalment more than it has open, and never splits more than the total open', () => {
+    expect(splitProportionally(rupees(300), [rupees(100), rupees(500)])).toEqual([rupees(50), rupees(250)]);
+    expect(splitProportionally(rupees(900), [rupees(100), rupees(500)])).toEqual([rupees(100), rupees(500)]); // more than is open: capped
+    expect(splitProportionally(rupees(9000), [rupees(100), rupees(500)])).toEqual([rupees(100), rupees(500)]);
+    expect(splitProportionally(0, [rupees(100)])).toEqual([0]);
+    expect(splitProportionally(rupees(50), [0, 0])).toEqual([0, 0]);
+  });
+  it('measures the cumulative reduction against the list price, so splitting a discount cannot dodge approval', () => {
+    const list = rupees(65000);
+    expect(cumulativeDiscountPct(list, rupees(65000))).toBe(0);
+    expect(cumulativeDiscountPct(list, rupees(58500))).toBe(10); // one 10% discount
+    // a second 10% on top is 19% of list, not "another 10%": it is judged as 19%
+    expect(cumulativeDiscountPct(list, rupees(58500 - 5850))).toBe(19);
+    expect(cumulativeDiscountPct(list, rupees(70000))).toBe(0); // charged above list: no discount
+    expect(cumulativeDiscountPct(0, rupees(100))).toBe(0);
+  });
+});
+

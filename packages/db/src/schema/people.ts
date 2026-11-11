@@ -309,6 +309,9 @@ export const admission = pgTable(
     feePlanId: uuid().notNull(),
     discountPct: numeric({ mode: 'number' }).default(0).notNull(),
     discountReason: text(),
+    /** Why the discount is given (referral, special, scholarship, other) and who referred / funds it. */
+    discountKind: text({ enum: ['referral', 'special', 'scholarship', 'other'] }),
+    discountSource: text(),
     quote: jsonb().$type<FeeQuote>(),
     consent: jsonb().$type<{ dpdp: boolean; purposes: string[]; parental: boolean; capturedAt: string }>(),
     referralCode: text(),

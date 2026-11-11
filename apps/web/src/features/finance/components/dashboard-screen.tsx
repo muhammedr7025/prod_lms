@@ -1,13 +1,86 @@
 'use client';
 
 import { admissionsContract, financeContract, type AdmissionRow } from '@exatech/contracts';
-import { formatINR, formatINRCompact, toISTTime } from '@exatech/domain';
+import { formatDayMonth, formatINR, formatINRCompact, toISTTime } from '@exatech/domain';
 import { Button, Card, CardHead, CardMeta, CardTitle, Dialog, EmptyState, Field, Grid, Page, PageHeader, Select, Skeleton, Stat, Sub, Table, TableScroll, Tag, TD, Textarea, TH, TR } from '@exatech/ui';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useBranch, useCan } from '@/components/me-context';
 import { useApi, useApiMutation } from '@/lib/hooks';
 import { recentMonths } from '../lib';
+
+/** Discounts given this financial year, by type — where the fee reductions are going. */
+function DiscountsPanel() {
+  const q = useApi(financeContract.discounts, { query: {} }, { refetchInterval: 120_000 });
+  const d = q.data;
+  return (
+    <Card pad="none" data-testid="discounts-panel">
+      <CardHead>
+        <CardTitle>Discounts &amp; scholarships{d ? ` · since ${formatDayMonth(d.from)}` : ''}</CardTitle>
+        {d && <Tag variant={d.count ? 'ink' : 'neutral'}>{d.count ? `${formatINR(d.total)} · ${d.count}` : 'None yet'}</Tag>}
+      </CardHead>
+      {!d && <Skeleton className="h-24 m-3" />}
+      {d && (
+        <>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 px-3.5 pb-3">
+            {d.byKind.map((k) => (
+              <div key={k.kind} className="border border-divider px-2.5 py-2">
+                <div className="text-[11px] text-neutral-600">{k.label}</div>
+                <div className="font-heading font-semibold text-[20px] leading-tight tabular">{formatINR(k.amount)}</div>
+                <div className="text-[11px] text-neutral-500">
+                  {k.count} discount{k.count === 1 ? '' : 's'}
+                </div>
+              </div>
+            ))}
+          </div>
+          {d.rows.length > 0 && (
+            <TableScroll minWidth={640}>
+              <Table className="text-[13px]">
+                <thead>
+                  <tr>
+                    <TH className="first:pl-3.5">Student</TH>
+                    <TH>Type</TH>
+                    <TH>Amount</TH>
+                    <TH>Reason</TH>
+                    <TH>When</TH>
+                  </tr>
+                </thead>
+                <tbody>
+                  {d.rows.slice(0, 8).map((r) => (
+                    <tr key={r.id} data-testid="discount-report-row">
+                      <TD className="first:pl-3.5">
+                        <Link href={`/finance/accounts/${r.enrollmentId}`} className="text-accent-800 underline underline-offset-[3px]">
+                          {r.studentName}
+                        </Link>
+                        <Sub>
+                          {r.batchCode} · {r.branchName}
+                        </Sub>
+                      </TD>
+                      <TD>
+                        {r.kindLabel}
+                        {r.sourceName && <Sub>{r.sourceLabel}: {r.sourceName}</Sub>}
+                      </TD>
+                      <TD className="tabular">
+                        {formatINR(r.amount)}
+                        <Sub>{r.pctAfter}% below list</Sub>
+                      </TD>
+                      <TD className="max-w-[260px]">{r.reason}</TD>
+                      <TD className="whitespace-nowrap">
+                        {formatDayMonth(r.grantedAt.slice(0, 10))}
+                        {r.grantedByName && <Sub>{r.grantedByName}</Sub>}
+                      </TD>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </TableScroll>
+          )}
+          {d.rows.length === 0 && <div className="px-3.5 pb-3.5 text-[13px] text-neutral-600">No discounts have been given in this period.</div>}
+        </>
+      )}
+    </Card>
+  );
+}
 
 function ReturnToSales({ row, onClose }: { row: AdmissionRow | null; onClose: () => void }) {
   const [note, setNote] = useState('');
@@ -220,6 +293,7 @@ export function FinanceDashboardScreen() {
           {d && <CardMeta>{d.targets.paceNote}</CardMeta>}
         </Card>
       </Grid>
+      <DiscountsPanel />
       {d && <div className="text-[11px] text-neutral-500 -mt-2">Figures refreshed {toISTTime(new Date(d.refreshedAt))} IST · cached up to 60 s, updated on every payment</div>}
       <ReturnToSales row={returning} onClose={() => setReturning(null)} />
       <ExportDialog kind={exporting} onClose={() => setExporting(null)} />

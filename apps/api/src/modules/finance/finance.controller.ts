@@ -13,6 +13,7 @@ import { forbidden, invalid, notFound } from '../../core/errors';
 import { Can, Endpoint, Input, Public, type Args } from '../../core/http';
 import { ScopeService } from '../../core/scope.service';
 import { AccountsService } from './accounts.service';
+import { DiscountsService } from './discounts.service';
 import { DashboardService } from './dashboard.service';
 import { DayBookService } from './daybook.service';
 import { DeskService } from './desk.service';
@@ -116,12 +117,25 @@ export class DeskController {
 export class AccountsController {
   constructor(
     private readonly accounts: AccountsService,
+    private readonly discounts: DiscountsService,
     private readonly dues: DuesService,
     private readonly online: OnlineService,
     private readonly shared: FinanceShared,
     private readonly db: Db,
     private readonly audit: AuditService,
   ) {}
+
+  @Endpoint(financeContract.grantDiscount)
+  @Can('finance:discount.approve')
+  async grantDiscount(@Input() { params, body }: Args<typeof financeContract.grantDiscount>) {
+    return this.discounts.grant(params.enrollmentId, body);
+  }
+
+  @Endpoint(financeContract.discounts)
+  @Can('finance:dashboard.read', 'finance:account.read')
+  async discountReport(@Input() { query }: Args<typeof financeContract.discounts>) {
+    return this.discounts.report(query);
+  }
 
   @Endpoint(financeContract.accounts)
   @Can('finance:account.read')

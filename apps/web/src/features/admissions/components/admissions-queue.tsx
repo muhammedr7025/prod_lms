@@ -124,6 +124,7 @@ export function AdmissionsQueueScreen() {
                     <TD className="text-xs">{a.planLine}</TD>
                     <TD className="tabular">
                       {a.discountPct ? `${a.discountPct}%` : '—'}
+                      {a.discountPct > 0 && a.discountKindLabel && <div className="text-[11px] text-neutral-600">{a.discountKindLabel}</div>}
                       {a.needsSuperAdmin && <div className="text-[11px] text-neutral-600">{a.superAdminApproved ? 'SA approved' : 'needs SA'}</div>}
                     </TD>
                     <TD>

@@ -29,6 +29,20 @@
       "when": 1793774338359,
       "tag": "0003_must_change_password",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794383415875,
+      "tag": "0004_fee_discount",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794383475875,
+      "tag": "0005_backfill_discounts",
+      "breakpoints": true
     }
   ]
 }
