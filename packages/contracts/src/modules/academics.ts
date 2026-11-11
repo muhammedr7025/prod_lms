@@ -414,8 +414,52 @@ export const zAcadStudentDetail = z.object({
   documents: z.array(z.string()),
   timeline: z.array(z.object({ at: zInstant, when: z.string(), text: z.string() })),
   card: z.object({ issuedAt: zInstant.nullable() }),
+  /** Current values of every field the admin can edit (the dialog's starting point). */
+  edit: z.object({
+    name: z.string(),
+    admissionNo: z.string().nullable(),
+    phone: z.string().nullable(),
+    email: z.string().nullable(),
+    dob: zDate.nullable(),
+    gender: z.string().nullable(),
+    address: z.string().nullable(),
+    /** Primary parent / guardian. `otherStudents` = siblings who share this guardian (editing changes them too). */
+    guardian: z.object({ name: z.string(), relationship: z.string(), phone: z.string().nullable(), email: z.string().nullable(), otherStudents: z.number().int() }).nullable(),
+    /** Registration with the certifying body (STED / BECIL) on the current enrollment; null without one. */
+    certification: z.object({ body: z.string().nullable(), regNo: z.string().nullable(), fee: zPaise.nullable(), submittedOn: zDate.nullable() }).nullable(),
+  }),
 });
 export type AcadStudentDetail = z.output<typeof zAcadStudentDetail>;
+
+const zBlankToNull = (max: number) => z.string().trim().max(max).transform((v) => (v === '' ? null : v)).nullable();
+
+/** Student details an administrator can correct. Fees and batch are deliberately not here (Finance / Transfer). */
+export const zAcadStudentUpdate = z.object({
+  name: z.string().trim().min(2, 'Enter the student’s full name').max(80, 'Name is too long'),
+  admissionNo: zBlankToNull(40),
+  phone: zBlankToNull(20),
+  email: zBlankToNull(120),
+  dob: zDate.nullable(),
+  gender: z.enum(['male', 'female', 'other']).nullable(),
+  address: zBlankToNull(300),
+  guardian: z
+    .object({
+      name: z.string().trim().min(2, 'Enter the parent / guardian’s name').max(80),
+      relationship: z.string().trim().min(2, 'Say how they are related (Father, Mother, …)').max(40),
+      phone: zBlankToNull(20),
+      email: zBlankToNull(120),
+    })
+    .nullish(),
+  certification: z
+    .object({
+      body: zBlankToNull(40),
+      regNo: zBlankToNull(60),
+      fee: zPaise.nullable(),
+      submittedOn: zDate.nullable(),
+    })
+    .nullish(),
+});
+export type AcadStudentUpdate = z.input<typeof zAcadStudentUpdate>;
 
 export const zAcadTransferOptions = z.object({
   enrollmentId: zId,
@@ -469,6 +513,13 @@ export const academicsStudentsContract = {
     response: zPage(zAcadStudentRow).extend({ total: z.number().int(), activeTotal: z.number().int(), branchLabel: z.string(), batches: z.array(z.object({ id: zId, code: z.string() })) }),
   }),
   get: route({ method: 'GET', path: '/api/academics/students/:id', response: zAcadStudentDetail }),
+  /** Correct a student's details. `notices` explains anything that could not be applied in full (e.g. a mobile number already used for another sign-in). */
+  update: route({
+    method: 'PUT',
+    path: '/api/academics/students/:id',
+    body: zAcadStudentUpdate,
+    response: z.object({ detail: zAcadStudentDetail, notices: z.array(z.string()) }),
+  }),
   transferOptions: route({ method: 'GET', path: '/api/academics/students/:id/transfer-options', response: zAcadTransferOptions }),
   transfer: route({
     method: 'POST',

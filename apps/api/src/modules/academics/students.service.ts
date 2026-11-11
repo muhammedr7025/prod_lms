@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { AcadFeeStatus, AcadStudentDetail, AcadStudentRow, AcadTag, AcadTransferOptions } from '@exatech/contracts';
+import type { AcadFeeStatus, AcadStudentDetail, AcadStudentRow, AcadTag, AcadTransferOptions, zAcadStudentUpdate } from '@exatech/contracts';
 import * as s from '@exatech/db';
 import { and, asc, desc, eq, gte, inArray, ne, or, sql, type SQL } from '@exatech/db';
 import {
@@ -10,6 +10,7 @@ import {
   formatINR,
   formatPhone,
   formatWeekdayDate,
+  isValidEmail,
   maskPhone,
   mondayOf,
   normalizePhone,
@@ -20,6 +21,7 @@ import {
   weekday,
 } from '@exatech/domain';
 import crypto from 'node:crypto';
+import type { z } from 'zod';
 import { AuditService } from '../../core/audit/audit.service';
 import { assertBranchAccess, assertInScope, branchScope, ctx } from '../../core/context';
 import { Db } from '../../core/db';
@@ -183,7 +185,7 @@ export class StudentsService {
     const enrIds = enrollments.map((x) => x.e.id);
     const [branch] = await this.db.db.select({ name: s.branch.name }).from(s.branch).where(eq(s.branch.id, st.branchId));
     const guardians = await this.db.db
-      .select({ name: s.guardian.name, phone: s.guardian.phone, email: s.guardian.email, relationship: s.studentGuardian.relationship })
+      .select({ id: s.guardian.id, name: s.guardian.name, phone: s.guardian.phone, email: s.guardian.email, relationship: s.studentGuardian.relationship })
       .from(s.studentGuardian)
       .innerJoin(s.guardian, eq(s.guardian.id, s.studentGuardian.guardianId))
       .where(eq(s.studentGuardian.studentId, id))
@@ -305,6 +307,7 @@ export class StudentsService {
     timeline.sort((a, b) => b.at.getTime() - a.at.getTime());
 
     const g = guardians[0];
+    const siblings = g ? Number((await this.db.db.select({ n: sql<number>`count(*)::int` }).from(s.studentGuardian).where(and(eq(s.studentGuardian.guardianId, g.id), ne(s.studentGuardian.studentId, id))))[0]?.n ?? 0) : 0;
     const attPct = current?.e.attendancePct ?? 100;
     const settings = await this.shared.settings();
     const cleared = current?.e.feeCleared ?? true;
@@ -317,7 +320,11 @@ export class StudentsService {
       ['Email', st.email ?? '—'],
       ['Date of birth', st.dob ? formatDate(st.dob) : '—'],
       ['Address', st.address ?? '—'],
+      ...(st.gender ? ([['Gender', st.gender.charAt(0).toUpperCase() + st.gender.slice(1)]] as [string, string][]) : []),
       ['Guardian', g ? `${g.name} · ${g.relationship} · ${formatPhone(g.phone)}` : '—'],
+      ...(current && (current.e.awardingBody || current.e.bodyRegNo)
+        ? ([['Certification', [current.e.awardingBody, current.e.bodyRegNo ? `reg. ${current.e.bodyRegNo}` : null, current.e.bodyFee != null ? `body fee ${formatINR(current.e.bodyFee)}${current.e.bodyFeeSubmittedOn ? ` · submitted ${formatDate(current.e.bodyFeeSubmittedOn)}` : ' · not submitted'}` : null].filter(Boolean).join(' · ')]] as [string, string][])
+        : []),
       ['Fee plan', current?.e.feePlanName ? `${current.e.feePlanName} · ${formatINR(current.e.feeTotal)}` : '—'],
       ['Fee clearance', cleared ? (current?.e.exemptUntil && current.e.exemptUntil >= today ? `Exempt until ${formatDayMonth(current.e.exemptUntil)}` : 'Cleared · notes unlocked') : 'Not cleared · fee-gated notes locked'],
       ['Portal', portal ? (portal.status === 'active' ? `Active${portal.lastLoginAt ? ` · last sign-in ${formatDayMonth(toISTDate(portal.lastLoginAt))}` : ''}` : portal.status === 'invited' ? 'Invited · not signed in yet' : 'Deactivated') : 'No account'],
@@ -348,6 +355,17 @@ export class StudentsService {
         pendingNote: missed ? `${missed} missed · ${pending} open` : 'assignments',
       },
       facts,
+      edit: {
+        name: st.name,
+        admissionNo: st.admissionNo,
+        phone: st.phone,
+        email: st.email,
+        dob: st.dob,
+        gender: st.gender,
+        address: st.address,
+        guardian: g ? { name: g.name, relationship: g.relationship, phone: g.phone, email: g.email, otherStudents: siblings } : null,
+        certification: current ? { body: current.e.awardingBody, regNo: current.e.bodyRegNo, fee: current.e.bodyFee, submittedOn: current.e.bodyFeeSubmittedOn } : null,
+      },
       fee: { label: fee.label, tag: fee.tag, rows: feeRows },
       attendance: att.map((a) => ({
         date: a.date,
@@ -502,6 +520,197 @@ export class StudentsService {
       if (to.branchId !== from.branchId) this.notify.invalidate(tx, to.branchId, [['academics'], ['reference']]);
       return { toEnrollmentId: created!.id, adjustment };
     });
+  }
+
+  /**
+   * Correct a student's details. Personal data, the primary parent / guardian and the certifying-body
+   * registration are editable; fees and batch are not (Finance approvals / Transfer own those).
+   * The sign-in accounts follow: name always, mobile and email when they are free. A number or address that
+   * already signs in somebody else is still saved as contact information and reported back in `notices`.
+   */
+  async update(id: string, input: z.output<typeof zAcadStudentUpdate>): Promise<{ detail: AcadStudentDetail; notices: string[] }> {
+    const notices: string[] = [];
+    const today = todayIST();
+    const bad = (field: string, message: string) => invalid(message, { [field]: message });
+    // Every problem is reported at once (per field), so the admin fixes them in one go.
+    const problems: Record<string, string> = {};
+    const name = input.name.replace(/\s+/g, ' ').trim();
+    const phone = input.phone ? normalizePhone(input.phone) : null;
+    if (input.phone && !phone) problems.phone = 'Enter a valid 10-digit mobile number';
+    const email = input.email ? input.email.toLowerCase() : null;
+    if (email && !isValidEmail(email)) problems.email = 'Enter a valid email address';
+    if (input.dob && (input.dob > today || input.dob < '1930-01-01')) problems.dob = input.dob > today ? 'Date of birth cannot be in the future' : 'Check the date of birth';
+    let guardian: { name: string; relationship: string; phone: string | null; email: string | null } | null = null;
+    if (input.guardian) {
+      const gp = input.guardian.phone ? normalizePhone(input.guardian.phone) : null;
+      if (input.guardian.phone && !gp) problems['guardian.phone'] = 'Enter a valid 10-digit mobile number';
+      const ge = input.guardian.email ? input.guardian.email.toLowerCase() : null;
+      if (ge && !isValidEmail(ge)) problems['guardian.email'] = 'Enter a valid email address';
+      guardian = { name: input.guardian.name.replace(/\s+/g, ' ').trim(), relationship: input.guardian.relationship.trim(), phone: gp, email: ge };
+    }
+    const cert = input.certification ?? null;
+    if (cert?.fee != null && cert.fee < 0) problems['certification.fee'] = 'The fee cannot be negative';
+    if (cert?.submittedOn && cert.submittedOn > today) problems['certification.submittedOn'] = 'The submission date cannot be in the future';
+    const first = Object.values(problems)[0];
+    if (first) throw invalid(Object.keys(problems).length > 1 ? 'Fix the highlighted fields — nothing was saved' : first, problems);
+
+    await this.db.tx(async (tx) => {
+      const [st] = await tx.select().from(s.student).where(eq(s.student.id, id)).for('update');
+      if (!st) throw notFound('Student');
+      assertInScope(st.branchId);
+      const changes: string[] = [];
+      const show = (v: string | null | undefined) => (v && v.length ? v : '—');
+      const note = (label: string, before: string | null | undefined, after: string | null | undefined, fmt: (v: string | null | undefined) => string = show) => {
+        if ((before ?? null) !== (after ?? null)) changes.push(`${label}: ${fmt(before)} → ${fmt(after)}`);
+      };
+
+      /* ── student ── */
+      const admissionNo = input.admissionNo ? input.admissionNo.trim() : null;
+      if (admissionNo && admissionNo !== st.admissionNo) {
+        const [dup] = await tx.select({ name: s.student.name }).from(s.student).where(and(eq(s.student.admissionNo, admissionNo), ne(s.student.id, id)));
+        if (dup) throw bad('admissionNo', `${admissionNo} already belongs to ${dup.name}`);
+      }
+      note('Name', st.name, name);
+      note('Admission no.', st.admissionNo, admissionNo);
+      note('Mobile', st.phone, phone, (v) => maskPhone(v));
+      note('Email', st.email, email);
+      note('Date of birth', st.dob, input.dob, (v) => (v ? formatDate(v) : '—'));
+      note('Gender', st.gender, input.gender);
+      note('Address', st.address, input.address);
+      await tx.update(s.student).set({ name, admissionNo, phone, email, dob: input.dob, gender: input.gender, address: input.address }).where(eq(s.student.id, id));
+
+      /* ── the student's own sign-in account ── */
+      if (st.userId) {
+        const [u] = await tx.select().from(s.user).where(eq(s.user.id, st.userId));
+        if (u) {
+          const patch: Partial<typeof s.user.$inferInsert> = {};
+          if (u.name !== name) patch.name = name;
+          const wantPhone = phone;
+          if ((u.phoneNumber ?? null) !== wantPhone) {
+            const taken = wantPhone ? (await tx.select({ id: s.user.id, name: s.user.name }).from(s.user).where(and(eq(s.user.phoneNumber, wantPhone), ne(s.user.id, u.id))))[0] : undefined;
+            if (taken) notices.push(`${formatPhone(wantPhone)} already signs in ${taken.name}, so it was saved as ${name.split(' ')[0]}’s contact number only — their own sign-in number is unchanged.`);
+            else {
+              patch.phoneNumber = wantPhone;
+              patch.phoneNumberVerified = false;
+            }
+          }
+          const placeholderEmail = u.email.endsWith('@no-email.invalid');
+          if (email && email !== u.email.toLowerCase()) {
+            const taken = (await tx.select({ id: s.user.id, name: s.user.name }).from(s.user).where(and(sql`lower(${s.user.email}) = ${email}`, ne(s.user.id, u.id))))[0];
+            if (taken) notices.push(`${email} already signs in ${taken.name}, so it was saved as ${name.split(' ')[0]}’s contact email only — their own sign-in email is unchanged.`);
+            else {
+              patch.email = email;
+              patch.emailVerified = false;
+            }
+          } else if (!email && !placeholderEmail && st.email && u.email.toLowerCase() === st.email.toLowerCase()) {
+            patch.email = `${(admissionNo ?? id).toLowerCase().replace(/[^a-z0-9]/g, '')}@no-email.invalid`;
+            patch.emailVerified = false;
+          }
+          if (Object.keys(patch).length) await tx.update(s.user).set(patch).where(eq(s.user.id, u.id));
+        }
+      }
+
+      /* ── primary parent / guardian ── */
+      if (guardian) {
+        const [link] = await tx
+          .select({ guardianId: s.guardian.id, userId: s.guardian.userId, name: s.guardian.name, phone: s.guardian.phone, email: s.guardian.email, relationship: s.studentGuardian.relationship })
+          .from(s.studentGuardian)
+          .innerJoin(s.guardian, eq(s.guardian.id, s.studentGuardian.guardianId))
+          .where(eq(s.studentGuardian.studentId, id))
+          .orderBy(desc(s.studentGuardian.isPrimary))
+          .limit(1);
+        let guardianId = link?.guardianId;
+        let guardianUserId = link?.userId ?? null;
+        if (link) {
+          note('Parent', link.name, guardian.name);
+          note('Relationship', link.relationship, guardian.relationship);
+          note('Parent mobile', link.phone, guardian.phone, (v) => maskPhone(v));
+          note('Parent email', link.email, guardian.email);
+          await tx.update(s.guardian).set({ name: guardian.name, phone: guardian.phone, email: guardian.email }).where(eq(s.guardian.id, link.guardianId));
+          await tx.update(s.studentGuardian).set({ relationship: guardian.relationship }).where(and(eq(s.studentGuardian.studentId, id), eq(s.studentGuardian.guardianId, link.guardianId)));
+        } else {
+          changes.push(`Parent added: ${guardian.name} · ${guardian.relationship}`);
+          guardianId = s.uuidv7();
+          await tx.insert(s.guardian).values({ id: guardianId, name: guardian.name, phone: guardian.phone, email: guardian.email });
+          await tx.insert(s.studentGuardian).values({ studentId: id, guardianId, relationship: guardian.relationship, isPrimary: true });
+        }
+        const kids = Number((await tx.select({ n: sql<number>`count(*)::int` }).from(s.studentGuardian).where(eq(s.studentGuardian.guardianId, guardianId!)))[0]?.n ?? 1);
+        if (kids > 1) notices.push(`${guardian.name} is also the parent of ${kids - 1} other student${kids > 2 ? 's' : ''}, so these parent details changed for them too.`);
+
+        // Parent sign-in account: follows the name; the mobile (OTP login) and email follow when they are free; created when a mobile is given.
+        if (guardianUserId) {
+          const [gu] = await tx.select().from(s.user).where(eq(s.user.id, guardianUserId));
+          if (gu) {
+            const patch: Partial<typeof s.user.$inferInsert> = {};
+            if (gu.name !== guardian.name) patch.name = guardian.name;
+            if ((gu.phoneNumber ?? null) !== guardian.phone) {
+              const taken = guardian.phone ? (await tx.select({ id: s.user.id, name: s.user.name }).from(s.user).where(and(eq(s.user.phoneNumber, guardian.phone), ne(s.user.id, gu.id))))[0] : undefined;
+              if (taken) notices.push(`${formatPhone(guardian.phone)} already signs in ${taken.name}, so it was saved as ${guardian.name}’s contact number only — their sign-in number is unchanged.`);
+              else {
+                patch.phoneNumber = guardian.phone;
+                patch.phoneNumberVerified = false;
+              }
+            }
+            if (guardian.email && guardian.email !== gu.email.toLowerCase()) {
+              const taken = (await tx.select({ id: s.user.id }).from(s.user).where(and(sql`lower(${s.user.email}) = ${guardian.email}`, ne(s.user.id, gu.id))))[0];
+              if (!taken) {
+                patch.email = guardian.email;
+                patch.emailVerified = false;
+              } else notices.push(`${guardian.email} already signs in another account, so it was saved as contact email only.`);
+            }
+            if (Object.keys(patch).length) await tx.update(s.user).set(patch).where(eq(s.user.id, gu.id));
+          }
+        } else if (guardian.phone) {
+          const taken = (await tx.select({ name: s.user.name }).from(s.user).where(eq(s.user.phoneNumber, guardian.phone)))[0];
+          const [parentRole] = await tx.select({ id: s.role.id }).from(s.role).where(and(eq(s.role.institutionId, st.institutionId), eq(s.role.key, 'parent')));
+          if (taken) notices.push(`${formatPhone(guardian.phone)} already signs in ${taken.name}, so ${guardian.name} has no parent login yet — give them a different mobile number to open the parent app.`);
+          else if (parentRole) {
+            guardianUserId = s.uuidv7();
+            let loginEmail = guardian.email ?? `parent.${(admissionNo ?? id).toLowerCase().replace(/[^a-z0-9]/g, '')}@no-email.invalid`;
+            const clash = (await tx.select({ id: s.user.id }).from(s.user).where(sql`lower(${s.user.email}) = ${loginEmail.toLowerCase()}`))[0];
+            if (clash) loginEmail = `parent.${guardianUserId.slice(-8)}@no-email.invalid`;
+            await tx.insert(s.user).values({ id: guardianUserId, name: guardian.name, email: loginEmail, emailVerified: false, phoneNumber: guardian.phone, kind: 'guardian', status: 'invited', invitedAt: new Date() });
+            await tx.update(s.guardian).set({ userId: guardianUserId }).where(eq(s.guardian.id, guardianId!));
+            await tx.insert(s.membership).values({ userId: guardianUserId, roleId: parentRole.id, branchIds: [st.branchId], scopeLabel: kids === 1 ? '1 child' : `${kids} children`, isDefault: true });
+            changes.push(`Parent login created for ${formatPhone(guardian.phone)}`);
+          }
+        }
+      }
+
+      /* ── certifying-body registration on the current enrollment ── */
+      if (cert) {
+        const [en] = await tx
+          .select()
+          .from(s.enrollment)
+          .where(and(eq(s.enrollment.studentId, id), eq(s.enrollment.status, 'active')))
+          .orderBy(desc(s.enrollment.joinedOn))
+          .limit(1)
+          .for('update');
+        if (!en) {
+          if (cert.body || cert.regNo || cert.fee != null || cert.submittedOn) throw invalid('This student has no active enrollment to record a registration on', { 'certification.body': 'No active enrollment' });
+        } else {
+          note('Certifying body', en.awardingBody, cert.body);
+          note('Registration no.', en.bodyRegNo, cert.regNo);
+          note('Body fee', en.bodyFee == null ? null : String(en.bodyFee), cert.fee == null ? null : String(cert.fee), (v) => (v == null ? '—' : formatINR(Number(v))));
+          note('Fee submitted on', en.bodyFeeSubmittedOn, cert.submittedOn, (v) => (v ? formatDate(v) : '—'));
+          await tx.update(s.enrollment).set({ awardingBody: cert.body, bodyRegNo: cert.regNo, bodyFee: cert.fee, bodyFeeSubmittedOn: cert.submittedOn }).where(eq(s.enrollment.id, en.id));
+        }
+      }
+
+      if (changes.length) {
+        await this.audit.log(tx, {
+          action: 'Student details edited',
+          kind: 'update',
+          entityType: 'student',
+          entityId: id,
+          entityLabel: `${name} · ${admissionNo ?? ''}`,
+          summary: changes.join(' · ').slice(0, 900),
+          branchId: st.branchId,
+        });
+        this.notify.invalidate(tx, st.branchId, [['academics'], ['finance']]);
+      }
+    });
+    return { detail: await this.detail(id), notices };
   }
 
   async reissueCard(id: string): Promise<void> {

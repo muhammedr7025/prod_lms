@@ -51,7 +51,7 @@ export const PERMISSIONS = [
   p('academics:timetable.manage', 'Courses, batches, timetable', 'U', 'Edit timetable, substitutes'),
   p('academics:leave.approve', 'Courses, batches, timetable', 'A', 'Approve leave'),
   p('academics:students.read', 'Courses, batches, timetable', 'R', 'View students'),
-  p('academics:students.manage', 'Courses, batches, timetable', 'U', 'Transfer, ID cards, go-live import'),
+  p('academics:students.manage', 'Courses, batches, timetable', 'U', 'Edit details, transfer, ID cards, go-live import'),
   // Leads
   p('sales:leads.read', 'Leads', 'R', 'View leads in scope'),
   p('sales:leads.create', 'Leads', 'C', 'Create leads'),

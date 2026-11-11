@@ -10,6 +10,7 @@ import { useDrawer } from '@/components/drawers/drawer-context';
 import { useCan } from '@/components/me-context';
 import { authPost, type ApiError } from '@/lib/api';
 import { useApi, useApiMutation } from '@/lib/hooks';
+import { EditStudentDialog } from './components/edit-dialog';
 import { TransferDialog } from './components/transfer-dialog';
 
 function Kpi({ label, value, meta, ink }: { label: string; value: ReactNode; meta?: ReactNode; ink?: boolean }) {
@@ -31,6 +32,7 @@ export default function StudentDrawer({ id }: { id: string }) {
   const canManage = useCan('academics:students.manage');
   const canImpersonate = useCan('institution:impersonate');
   const [transferOpen, setTransferOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [viewAs, setViewAs] = useState(false);
   const [reason, setReason] = useState('');
   const [starting, setStarting] = useState(false);
@@ -77,6 +79,11 @@ export default function StudentDrawer({ id }: { id: string }) {
         <Button variant="secondary" disabled={!data.batchId} onClick={() => go(`/timetable?batch=${data.batchId}`)}>
           Timetable
         </Button>
+        {canManage && (
+          <Button variant="secondary" onClick={() => setEditOpen(true)}>
+            Edit details
+          </Button>
+        )}
         {canManage && (
           <Button variant="secondary" disabled={data.enrollmentStatus !== 'active'} onClick={() => setTransferOpen(true)}>
             Transfer batch
@@ -196,6 +203,7 @@ export default function StudentDrawer({ id }: { id: string }) {
       </Card>
 
       {canManage && <TransferDialog student={data} open={transferOpen} onClose={() => setTransferOpen(false)} />}
+      {canManage && <EditStudentDialog student={data} open={editOpen} onClose={() => setEditOpen(false)} />}
       <Dialog
         open={viewAs}
         onOpenChange={setViewAs}

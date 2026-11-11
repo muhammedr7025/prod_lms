@@ -194,6 +194,12 @@ export class StudentsController {
     return this.students.detail(params.id);
   }
 
+  @Endpoint(academicsStudentsContract.update)
+  @Can('academics:students.manage')
+  updateStudent(@Input() { params, body }: Args<typeof academicsStudentsContract.update>) {
+    return this.students.update(params.id, body);
+  }
+
   @Endpoint(academicsStudentsContract.transferOptions)
   @Can('academics:students.manage')
   async transferOptions(@Input() { params }: Args<typeof academicsStudentsContract.transferOptions>) {
